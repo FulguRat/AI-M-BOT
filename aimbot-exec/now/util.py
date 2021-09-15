@@ -155,3 +155,8 @@ def use_choice(rangemin, rangemax, askstring):
             print('呵呵...请重新输入')
 
     return selection
+
+
+# 版本更新消息框
+def MsgBox(title, text, style=0):
+    return windll.user32.MessageBoxW(0, text, title, style)

@@ -1,7 +1,7 @@
 from two_class_threat import threat_handling
 from math import sqrt, pow
 from util import check_gpu
-from numba import njit
+# from numba import njit
 import numpy as np
 import onnxruntime
 import win32gui
@@ -115,7 +115,7 @@ class FrameDetectionX:
 
 
 # 分析预测数据
-@njit(fastmath=True)
+# @njit(fastmath=True)
 def analyze(predictions, ratio):
     boxes = predictions[:, :4]
     scores = predictions[:, 4:5] * predictions[:, 5:]
@@ -143,7 +143,7 @@ def preprocess(img, input_size, swap=(2, 0, 1)):
 
 
 # 从yolox复制的单类非极大值抑制函数
-@njit(fastmath=True)
+# @njit(fastmath=True)
 def nms(boxes, scores, nms_thr):
     """Single class NMS implemented in Numpy."""
     x1 = boxes[:, 0]

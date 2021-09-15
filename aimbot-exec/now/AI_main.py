@@ -19,7 +19,7 @@ from ctypes import windll
 import numpy as np
 import pywintypes
 import win32gui
-import bezier
+# import bezier
 import cv2
 import os
 
@@ -302,9 +302,13 @@ def main():
             break
 
         if Conan:
-            target_count, moveX, moveY, fire0pos, enemy_close, can_fire, screenshot = Analysis.detect(screenshot, arr[12], arr[19])
-            change_withlock(arr, 7, target_count, lock)
-            change_withlock(arr, 11, fire0pos, lock)
+            try:
+                target_count, moveX, moveY, fire0pos, enemy_close, can_fire, screenshot = Analysis.detect(screenshot, arr[12], arr[19])
+                change_withlock(arr, 7, target_count, lock)
+                change_withlock(arr, 11, fire0pos, lock)
+            except ValueError as e:
+                print('窗口已最小化\n' + str(e))
+                break
 
         if str(win32gui.GetForegroundWindow()) in (str(window_hwnd_name) + str(window_outer_hwnd)) and not test_win and arr[6]:  # 是否需要控制鼠标:
             change_withlock(arr, 12, recoil_more * recoil_control * arr[18] / arr[6], lock)
@@ -341,6 +345,7 @@ def main():
             process_times.popleft()
 
     print('关闭进程中......')
+    change_withlock(arr, 14, 1, lock)
     win_cap.release_resource()
     millisleep(1000)  # 为了稳定
     shm_show_img.close()
