@@ -1,124 +1,83 @@
-from ctypes import CDLL, c_int, c_int64
+from ctypes import windll
+from ctypes import CDLL
 from os import path
 
 
 basedir = path.dirname(path.abspath(__file__))
 ghubdlldir = path.join(basedir, 'ghub_mouse.dll')
-msdkdlldir = path.join(basedir, 'msdk.dll')
+windlldir = path.join(basedir, 'win_sdipmk.dll')
+msdkdlldir = path.join(basedir, 'load_msdk.dll')
 
 # ↓↓↓↓↓↓↓↓↓ 调用ghub/键鼠驱动 ↓↓↓↓↓↓↓↓↓
 
 gm = CDLL(ghubdlldir)
 gmok = gm.Agulll()
 
+sdip = CDLL(windlldir)
+sdipok = sdip.Agulll()
+
 msdk = CDLL(msdkdlldir)
-M_Open = msdk.M_Open
-M_Open.argtypes = [c_int]
-M_Open.restype = c_int64
-msdk_hdl = M_Open(1)
-msdkok = 1 if msdk_hdl else 0
+msdkok = msdk.Agulll()
 
-if msdkok:
-    M_LeftDown = msdk.M_LeftDown
-    M_LeftDown.restype = c_int
-    M_LeftDown.argtypes = [c_int64]
+Mach_Move = gm.Mach_Move if gmok else msdk.Mach_Move if msdkok else sdip.Mach_Move
+Leo_Kick = gm.Leo_Kick if gmok else msdk.Leo_Kick if msdkok else sdip.Leo_Kick
+Niman_Years = gm.Niman_Years if gmok else msdk.Niman_Years if msdkok else sdip.Niman_Years
+Mebiuspin = gm.Mebiuspin if gmok else msdk.Mebiuspin if msdkok else sdip.Mebiuspin
+Shwaji = gm.Shwaji if gmok else msdk.Shwaji if msdkok else sdip.Shwaji
 
-    M_RightDown = msdk.M_RightDown
-    M_RightDown.restype = c_int
-    M_RightDown.argtypes = [c_int64]
-
-    M_LeftUp = msdk.M_LeftUp
-    M_LeftUp.restype = c_int
-    M_LeftUp.argtypes = [c_int64]
-
-    M_RightUp = msdk.M_RightUp
-    M_RightUp.restype = c_int
-    M_RightUp.argtypes = [c_int64]
-
-    M_MoveR = msdk.M_MoveR
-    M_MoveR.restype = c_int
-    M_MoveR.argtypes = [c_int64, c_int, c_int]
-
-    M_MouseWheel = msdk.M_MouseWheel
-    M_MouseWheel.restype = c_int
-    M_MouseWheel.argtypes = [c_int64, c_int]
-
-    M_KeyDown2 = msdk.M_KeyDown2
-    M_KeyDown2.restype = c_int
-    M_KeyDown2.argtypes = [c_int64, c_int]
-
-    M_KeyUp2 = msdk.M_KeyUp2
-    M_KeyUp2.restype = c_int
-    M_KeyUp2.argtypes = [c_int64, c_int]
-
-    M_Close = msdk.M_Close
-    M_Close.restype = c_int
-    M_Close.argtypes = [c_int64]
+Orb_Ground = sdip.Orb_Ground if sdipok else msdk.Orb_Ground
+Zestium_Upper = sdip.Orb_Ground if sdipok else msdk.Zestium_Upper
 
 
-def mouse_xy(x, y):
-    if gmok:
-        return gm.Mach_Move(int(x), int(y))
-    elif msdkok:
-        return M_MoveR(msdk_hdl, int(x), int(y))
+def mouse_xy(x, y, abs_move = False):
+    return Mach_Move(int(x), int(y), abs_move)
 
 
 def mouse_down(key = 1):
-    if gmok:
-        return gm.Leo_Kick(int(key))
-    elif msdkok:
-        if key == 1:
-            return M_LeftDown(msdk_hdl)
-        elif key == 2:
-            return M_RightDown(msdk_hdl)
+    return Leo_Kick(int(key))
 
 
 def mouse_up(key = 1):
-    if gmok:
-        return gm.Niman_years()
-    elif msdkok:
-        if key == 1:
-            return M_LeftUp(msdk_hdl)
-        elif key == 2:
-            return M_RightUp(msdk_hdl)
+    return Niman_Years(key)
 
 
 def scroll(num = 1):
-    if gmok:
-        return gm.Mebiuspin(int(num))
-    elif msdkok:
-        return M_MouseWheel(msdk_hdl, -int(num))
+    return Mebiuspin(int(num))
 
 
 def mouse_close():
-    if gmok:
-        return gm.Shwaji()
-    elif msdkok:
-        return M_Close(msdk_hdl)
+    try:
+        return Shwaji()
+    except OSError:
+        pass
 
 
-def key_down(key = 69):
-    if msdkok:
-        return M_KeyDown2(msdk_hdl, key)
+def key_down(key):
+    if type(key) == str and len(key) == 1:  # 如果不是str就不会检查第二个条件
+        return Orb_Ground(char2vk(key))
+    elif isinstance(key, int):
+        return Orb_Ground(key)
 
 
-def key_up(key = 69):
-    if msdkok:
-        return M_KeyUp2(msdk_hdl, key)
+def key_up(key):
+    if type(key) == str and len(key) == 1:  # 如果不是str就不会检查第二个条件
+        return Zestium_Upper(char2vk(key))
+    elif isinstance(key, int):
+        return Zestium_Upper(key)
 
 # ↑↑↑↑↑↑↑↑↑ 调用ghub/键鼠驱动 ↑↑↑↑↑↑↑↑↑
 
+
+# 将部分按键转换为虚拟键值
+def char2vk(c):
+    try:
+        return windll.user32.VkKeyScanW(ord(c)) & 0xFF
+    except TypeError:
+        return 0
+
+
 """
-键盘按键和键盘对应代码表：
-A <--------> 65 B <--------> 66 C <--------> 67 D <--------> 68
-E <--------> 69 F <--------> 70 G <--------> 71 H <--------> 72
-I <--------> 73 J <--------> 74 K <--------> 75 L <--------> 76
-M <--------> 77 N <--------> 78 O <--------> 79 P <--------> 80
-Q <--------> 81 R <--------> 82 S <--------> 83 T <--------> 84
-U <--------> 85 V <--------> 86 W <--------> 87 X <--------> 88
-Y <--------> 89 Z <--------> 90 0 <--------> 48 1 <--------> 49
-2 <--------> 50 3 <--------> 51 4 <--------> 52 5 <--------> 53
-6 <--------> 54 7 <--------> 55 8 <--------> 56 9 <--------> 57
+键盘按键和键盘对应代码表:
 数字键盘 1 <--------> 96 数字键盘 2 <--------> 97 数字键盘 3 <--------> 98
 数字键盘 4 <--------> 99 数字键盘 5 <--------> 100 数字键盘 6 <--------> 101
 数字键盘 7 <--------> 102 数字键盘 8 <--------> 103 数字键盘 9 <--------> 104

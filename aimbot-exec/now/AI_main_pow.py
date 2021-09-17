@@ -1,6 +1,6 @@
 from util import set_dpi, is_full_screen, is_admin, clear, restart, millisleep, get_window_info, FOV, use_choice, move_mouse
-from mouse import mouse_down, mouse_up, mouse_close, scroll, key_down, key_up, gmok, msdkok
 from win32api import GetAsyncKeyState, GetCurrentProcessId, OpenProcess, GetSystemMetrics
+from mouse import mouse_down, mouse_up, mouse_close, scroll, key_down, key_up
 from win32process import SetPriorityClass, ABOVE_NORMAL_PRIORITY_CLASS
 from multiprocessing import Process, shared_memory, Array, Lock
 from win32con import VK_END, PROCESS_ALL_ACCESS
@@ -202,8 +202,6 @@ def main():
     set_dpi()  # 设置高DPI不受影响
     os.chdir(os.path.dirname(os.path.abspath(__file__)))  # 设置工作路径
     check_file('yolov4-tiny')  # 如果文件不存在则退出
-    print(f'罗技驱动加载状态: {gmok}')
-    print(f'飞易来/文盒驱动加载状态: {msdkok}')
 
     # 提升进程优先级
     if platform == 'win32':
