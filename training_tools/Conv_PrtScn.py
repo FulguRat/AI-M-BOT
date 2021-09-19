@@ -50,7 +50,7 @@ if __name__ == '__main__':
         if RandomFileTime(source_path + file):
             fail_change_time += 1
 
-        image = cv2.resize(image_source, (512, 320), 0, 0, cv2.INTER_LINEAR)  # 修改尺寸
+        image = cv2.resize(image_source, (512, 320), interpolation=cv2.INTER_AREA)  # 修改尺寸变小
         cv2.imencode('.png', image, [int(cv2.IMWRITE_PNG_COMPRESSION), 3])[1].tofile(target_path + file[0:file.find('.')] + '.png')  # 重命名并且保存
 
     print(f'批量处理完成，文件改时失败{fail_change_time}个')

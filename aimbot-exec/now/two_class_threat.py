@@ -12,7 +12,7 @@ def threat_handling(frame, window_w, threat_alist, recoil_ctrl, frame_height, fr
         x0 = x_tht + (w_tht - frame_width) / 2
         y0 = y_tht + (h_tht - frame_height) / 2
 
-        if abs(x0) <= 1/4 * w_tht and abs(y0) <= 2/5 * h_tht:  # 查看是否已经指向目标
+        if abs(x0) <= 2/5 * w_tht and abs(y0) <= 2/5 * h_tht:  # 查看是否已经指向目标
             fire_ok = 1
 
         if threat_alist[0][2] == 0 and class_num > 1:

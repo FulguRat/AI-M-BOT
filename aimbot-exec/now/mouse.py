@@ -10,14 +10,20 @@ msdkdlldir = path.join(basedir, 'load_msdk.dll')
 
 # ↓↓↓↓↓↓↓↓↓ 调用ghub/键鼠驱动 ↓↓↓↓↓↓↓↓↓
 
-gm = CDLL(ghubdlldir)
-gmok = gm.Agulll()
+try:
+    gm = CDLL(ghubdlldir)
+    gmok = gm.Agulll()
+except FileNotFoundError:
+    gmok = 0
+
+try:
+    msdk = CDLL(msdkdlldir)
+    msdkok = msdk.Agulll()
+except FileNotFoundError:
+    msdkok = 0
 
 sdip = CDLL(windlldir)
 sdipok = sdip.Agulll()
-
-msdk = CDLL(msdkdlldir)
-msdkok = msdk.Agulll()
 
 Mach_Move = gm.Mach_Move if gmok else msdk.Mach_Move if msdkok else sdip.Mach_Move
 Leo_Kick = gm.Leo_Kick if gmok else msdk.Leo_Kick if msdkok else sdip.Leo_Kick

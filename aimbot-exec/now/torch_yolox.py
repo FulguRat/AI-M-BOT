@@ -27,9 +27,9 @@ class FrameDetectionX:
     def __init__(self, hwnd_value):
         self.win_class_name = win32gui.GetClassName(hwnd_value)
         self.nms_thd = {
-            'Valve001': 0.45,
-            'CrossFire': 0.45,
-        }.get(self.win_class_name, 0.45)
+            'Valve001': 0.3,
+            'CrossFire': 0.3,
+        }.get(self.win_class_name, 0.3)
         load_file('yolox_tiny', self.WEIGHT_FILE)
 
         # 检测是否在GPU上运行图像识别
@@ -67,7 +67,7 @@ class FrameDetectionX:
                 frame_height, frame_width = frames.shape[:2]
             frame_height += 0
             frame_width += 0
-        except (cv2.error, AttributeError, UnboundLocalError) as e:
+        except (AttributeError, UnboundLocalError) as e:  # cv2.error
             if self.errors < 2:
                 print(str(e))
                 self.errors += 1
@@ -107,6 +107,8 @@ class FrameDetectionX:
                 h_factor = (0.5 if w >= h or (self.total_classes > 1 and final_cls_ind == 0) else 0.25)
                 dist = sqrt(pow(frame_width / 2 - (x + w / 2), 2) + pow(frame_height / 2 - (y + h * h_factor), 2))
                 threat_var = -(pow(w * h, 1/2) / dist * final_score if dist else 9999)
+                if final_cls_ind == 0 and self.total_classes > 1:
+                    threat_var *= 5
                 threat_list.append([threat_var, [x, y, w, h], final_cls_ind])
 
         x0, y0, fire_pos, fire_close, fire_ok, frames = threat_handling(frames, windoww, threat_list, recoil_coty, frame_height, frame_width, self.total_classes)

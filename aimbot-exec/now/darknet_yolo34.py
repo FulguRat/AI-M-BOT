@@ -9,7 +9,7 @@ import cv2
 # 分析类
 class FrameDetection34:
     # 类属性
-    side_width, side_height = 288, 352  # 512, 320  # 输入尺寸
+    side_width, side_height = 512, 320  # 输入尺寸
     conf_thd = 0.5  # 置信度阀值
     nms_thd = 0.3  # 非极大值抑制
     win_class_name = None  # 窗口类名
@@ -24,9 +24,9 @@ class FrameDetection34:
     def __init__(self, hwnd_value):
         self.win_class_name = win32gui.GetClassName(hwnd_value)
         self.nms_thd = {
-            'Valve001': 0.45,
-            'CrossFire': 0.45,
-        }.get(self.win_class_name, 0.45)
+            'Valve001': 0.3,
+            'CrossFire': 0.3,
+        }.get(self.win_class_name, 0.3)
 
         load_file('yolov4-tiny', self.CONFIG_FILE, self.WEIGHT_FILE)
         self.net = cv2.dnn.readNet(self.CONFIG_FILE[0], self.WEIGHT_FILE[0])  # 读取权重与配置文件
@@ -41,20 +41,23 @@ class FrameDetection34:
             self.COLORS.append(tuple(np.random.randint(256, size=3).tolist()))
 
         # 检测并设置在GPU上运行图像识别
-        if cv2.cuda.getCudaEnabledDeviceCount():
-            self.net.setPreferableBackend(cv2.dnn.DNN_BACKEND_CUDA)
-            gpu_eval = check_gpu()
-            # self.net.setPreferableTarget(cv2.dnn.DNN_TARGET_CUDA_FP16)  # 似乎需要模型支持半精度浮点
-            self.net.setPreferableTarget(cv2.dnn.DNN_TARGET_CUDA)
-            gpu_message = {
-                2: '小伙电脑顶呱呱啊',
-                1: '战斗完全木得问题',
-            }.get(gpu_eval, '您的显卡配置不够')
-            print(gpu_message)
-        else:
-            self.net.setPreferableBackend(cv2.dnn.DNN_BACKEND_DEFAULT)
-            self.net.setPreferableTarget(cv2.dnn.DNN_TARGET_CPU)
-            print('您没有可识别的N卡')
+        try:
+            if cv2.cuda.getCudaEnabledDeviceCount():
+                self.net.setPreferableBackend(cv2.dnn.DNN_BACKEND_CUDA)
+                gpu_eval = check_gpu()
+                # self.net.setPreferableTarget(cv2.dnn.DNN_TARGET_CUDA_FP16)  # 似乎需要模型支持半精度浮点
+                self.net.setPreferableTarget(cv2.dnn.DNN_TARGET_CUDA)
+                gpu_message = {
+                    2: '小伙电脑顶呱呱啊',
+                    1: '战斗完全木得问题',
+                }.get(gpu_eval, '您的显卡配置不够')
+                print(gpu_message)
+            else:
+                self.net.setPreferableBackend(cv2.dnn.DNN_BACKEND_DEFAULT)
+                self.net.setPreferableTarget(cv2.dnn.DNN_TARGET_CPU)
+                print('您没有可识别的N卡')
+        except cv2.error as e:
+            print('getCudaEnabledDeviceCount函数运行错误\n' + str(e))
 
     def detect(self, frames, recoil_coty, windoww = 1600):
         try:
@@ -62,7 +65,7 @@ class FrameDetection34:
                 frame_height, frame_width = frames.shape[:2]
             frame_height += 0
             frame_width += 0
-        except (cv2.error, AttributeError, UnboundLocalError) as e:
+        except (AttributeError, UnboundLocalError) as e:  # cv2.error
             if self.errors < 2:
                 print(str(e))
                 self.errors += 1
@@ -86,8 +89,8 @@ class FrameDetection34:
             h_factor = (0.5 if w >= h or (self.total_classes > 1 and classid == 0) else 0.25)
             dist = sqrt(pow(frame_width / 2 - (x + w / 2), 2) + pow(frame_height / 2 - (y + h * h_factor), 2))
             threat_var = -(pow(w * h, 1/2) / dist * score if dist else 9999)
-            if classid == 0:
-                threat_var *= 6
+            if classid == 0 and self.total_classes > 1:
+                threat_var *= 5
             threat_list.append([threat_var, box, classid])
 
         x0, y0, fire_pos, fire_close, fire_ok, frames = threat_handling(frames, windoww, threat_list, recoil_coty, frame_height, frame_width, self.total_classes)
