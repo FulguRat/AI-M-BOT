@@ -27,7 +27,7 @@ if __name__ == '__main__':
     freeze_support()
 
     Copyright_Information = '\n\n\n=========================\n| FREE to use 本软件免费使用\n| Author/作者: jiapai12138(killmatt01)\n| 学习交流欢迎加群: 212068326\n========================='
-    MsgBox('v2.6.3 版本更新', 'bug修复\n改变截图尺寸以屏蔽枪口干扰\n恢复烧卡版(实际意义低)\n优化开火判断逻辑'+Copyright_Information)
+    MsgBox('v2.6.4 版本更新', 'bug生成/修复\n更换模型,对cf/cs1.6/逆战支持更好\n暂时不用yolox模型(等待训练)'+Copyright_Information)
 
     MsgBox('键鼠检测', f'罗技驱动加载状态: {gmok} (函数已稳定)\n飞易来/文盒驱动准备状态: {msdkok} (函数测试中)')
 
