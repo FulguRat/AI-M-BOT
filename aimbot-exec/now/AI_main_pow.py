@@ -262,9 +262,9 @@ def main():
         'LaunchUnrealUWindowsClient': 5,  # 20
     }.get(window_class_name, 2)
 
-    # 测试过的几个游戏的移动系数,鼠标灵敏度设置看备注
+    # 测试过的几个游戏的移动系数,鼠标灵敏度设置看备注(800dpi)
     move_factor = {
-        'CrossFire': 0.971,  # 32
+        'CrossFire': 1.333,  # 32
         'Valve001': 1.667,  # 2.5
         'LaunchCombatUWindowsClient': 1.319,  # 10.0
         'LaunchUnrealUWindowsClient': 0.500,  # 20
@@ -328,7 +328,7 @@ def main():
                 target_count, moveX, moveY, fire0pos, enemy_close, can_fire, screenshot = Analysis.detect(screenshot, arr[12], arr[19])
                 change_withlock(arr, 7, target_count, lock)
                 change_withlock(arr, 11, fire0pos, lock)
-            except ValueError as e:
+            except (ValueError, UnboundLocalError) as e:
                 print('窗口已最小化\n' + str(e))
                 break
 
@@ -343,13 +343,13 @@ def main():
             elif arr[6] == 2:  # 副武器
                 change_withlock(arr, 10, 69.4 if enemy_close or arr[11] != 1 else 94.4, lock)
             recoil_more = 1.25 if 1000/(arr[10] + 30.6) > 6 else 1
-            if target_count and arr[8]:
+            if target_count and (arr[8] or GetAsyncKeyState(0x06) < 0):  # XButton2
                 move_mouse(round(pid_moveX, 3), round(pid_moveY, 3))
             if arr[9]:
                 click_mouse(window_class_name, arr[10], can_fire)
 
-        if not (arr[6] and target_count and arr[8]):  # 测试帮助复原
-            relax = -pidx(0.0)
+        if not (arr[6] and target_count and (arr[8] or GetAsyncKeyState(0x06) < 0)):  # 测试帮助复原
+            pidx.reset()  # relax = -pidx(0.0)
 
         with lock:
             show_img = np.ndarray(screenshot.shape, dtype=screenshot.dtype, buffer=shm_show_img.buf)

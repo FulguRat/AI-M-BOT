@@ -160,3 +160,39 @@ def use_choice(rangemin, rangemax, askstring):
 # 简易消息框
 def MsgBox(title, text, style=0):
     return windll.user32.MessageBoxW(0, text, title, style)
+
+
+# 尝试pid
+class PID:
+    def __init__(self, P=0.2, I=0.0, D=0.0, ExpValue=0.0):
+        self.kp = P
+        self.ki = I
+        self.kd = D
+        self.uPrevious = 0
+        self.uCurent = 0
+        self.setValue = ExpValue
+        self.lastErr = 0
+        self.preLastErr = 0
+        self.errSum = 0
+        self.errSumLimit = 10
+
+    # 位置式PID
+    def pidPosition(self, curValue):
+        err = self.setValue - curValue
+        dErr = err - self.lastErr
+        self.preLastErr = self.lastErr
+        self.lastErr = err
+        self.errSum += err
+        outPID = self.kp * err + (self.ki * self.errSum) + (self.kd * dErr)
+        return outPID
+
+    # 增量式PID
+    def __call__(self, curValue):
+        self.uCurent = self.pidPosition(curValue)  # 用位置式记录位置
+        outPID = self.uCurent - self.uPrevious
+        self.uPrevious = self.uCurent
+        return outPID
+
+    # 更新比例P值
+    def set_p(self, new_p):
+        self.kp = new_p
