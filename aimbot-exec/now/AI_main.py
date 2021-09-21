@@ -242,7 +242,7 @@ def main():
     print(win_pos[0], win_pos[1], win_client_rect[2], win_client_rect[3])
 
     # 初始化分析类
-    (Analysis, string_model) = (FrameDetection34(window_hwnd_name), '您正使用yolov4-tiny模型')  # if Conan == 1 else (FrameDetectionX(window_hwnd_name), '您正使用yolox-tiny模型')
+    (Analysis, string_model) = (FrameDetection34(window_hwnd_name), '您正使用yolov4-tiny模型') if Conan == 1 else (FrameDetectionX(window_hwnd_name), '您正使用yolox-tiny模型')
     print(string_model)
 
     # 等待截图类初始化
@@ -270,8 +270,8 @@ def main():
     print(f'基础边长 = {arr[5]}')
 
     while not arr[14]:
-        screenshot = win_cap.grab_screenshot()
-        # screenshot = win_cap.get_screenshot()
+        # screenshot = win_cap.grab_screenshot()
+        screenshot = win_cap.get_screenshot()
         change_withlock(arr, 0, screenshot.shape[0], lock)
         change_withlock(arr, 1, screenshot.shape[1], lock)
         try:
@@ -337,6 +337,7 @@ def main():
             show_img = np.ndarray(screenshot.shape, dtype=screenshot.dtype, buffer=shm_show_img.buf)
             show_img[:] = screenshot[:]  # 将截取数据拷贝进分享的内存
 
+        millisleep(1)  # 降低平均cpu占用
         time_used = time() - ini_sct_time
         ini_sct_time = time()
         process_times.append(time_used)

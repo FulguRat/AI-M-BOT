@@ -18,7 +18,7 @@ class FrameDetectionX:
     total_classes = 1  # 模型类数量
     COLORS = []
     WEIGHT_FILE = ['./']
-    input_shape = (224, 192)  # 输入尺寸
+    input_shape = (512, 320)  # 输入尺寸
     EP_list = onnxruntime.get_available_providers()  # ['TensorrtExecutionProvider', 'CUDAExecutionProvider', 'CPUExecutionProvider'] Tensorrt优先于CUDA优先于CPU执行提供程序
     session, io_binding, device_name = None, None, None
     errors = 0  # 仅仅显示一次错误

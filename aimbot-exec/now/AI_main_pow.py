@@ -166,9 +166,9 @@ def capturing(array, the_class_name, the_hwnd_name, lock):
     print(f'基础边长 = {array[5]}')
 
     while not array[14]:
-        # millisleep(1)  # 降低平均cpu占用
-        screenshots = win_cap.grab_screenshot()
-        # screenshots = win_cap.get_screenshot()
+        millisleep(1)  # 降低平均cpu占用
+        # screenshots = win_cap.grab_screenshot()
+        screenshots = win_cap.get_screenshot()
         change_withlock(array, 0, screenshots.shape[0], lock)
         change_withlock(array, 1, screenshots.shape[1], lock)
         with lock:
@@ -292,7 +292,7 @@ def main():
     print(win_pos[0], win_pos[1], win_client_rect[2], win_client_rect[3])
 
     # 初始化分析类
-    (Analysis, string_model) = (FrameDetection34(window_hwnd_name), '您正使用yolov4-tiny模型')  # if Conan == 1 else (FrameDetectionX(window_hwnd_name), '您正使用yolox-tiny模型')
+    (Analysis, string_model) = (FrameDetection34(window_hwnd_name), '您正使用yolov4-tiny模型') if Conan == 1 else (FrameDetectionX(window_hwnd_name), '您正使用yolox-tiny模型')
     print(string_model)
 
     # 等待截图类初始化
@@ -355,7 +355,7 @@ def main():
             show_img = np.ndarray(screenshot.shape, dtype=screenshot.dtype, buffer=shm_show_img.buf)
             show_img[:] = screenshot[:]  # 将截取数据拷贝进分享的内存
 
-        # millisleep(1)  # 降低平均cpu占用
+        millisleep(1)  # 降低平均cpu占用
         time_used = time() - ini_sct_time
         ini_sct_time = time()
         process_times.append(time_used)
