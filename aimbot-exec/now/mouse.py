@@ -48,25 +48,33 @@ Zestium_Upper = sdip.Orb_Ground if sdipok else msdk.Zestium_Upper
 
 
 def mouse_xy(x, y, abs_move = False):
-    if ddok:
+    if ddok and not(gmok or msdkok):
+        if not abs_move:
+            while (abs(x) > 127 or abs(y) > 127):
+                if abs(x) > 127:
+                    dd.DD_movR(int(abs(x)/x*127), 0)
+                    x -= abs(x)/x*127
+                if abs(y) > 127:
+                    dd.DD_movR(0, int(abs(y)/y*127))
+                    y -= abs(y)/y*127
         return dd.DD_mov(int(x), int(y)) if abs_move else dd.DD_movR(int(x), int(y))
     return Mach_Move(int(x), int(y), abs_move)
 
 
 def mouse_down(key = 1):
-    if ddok:
-        return dd.DD_btn(pow(key, 2))
+    if ddok and not(gmok or msdkok):
+        return dd.DD_btn(int(pow(key, 2)))
     return Leo_Kick(int(key))
 
 
 def mouse_up(key = 1):
-    if ddok:
-        return dd.DD_btn(pow(key, 2)*2)
+    if ddok and not(gmok or msdkok):
+        return dd.DD_btn(int(pow(key, 2)*2))
     return Niman_Years(key)
 
 
 def scroll(num = 1):
-    if ddok:
+    if ddok and not(gmok or msdkok):
         for i in range(abs(num)):
             dd.DD_whl(1 if num < 0 else 2)
         return
@@ -81,7 +89,7 @@ def mouse_close():
 
 
 def key_down(key):
-    if ddok:
+    if ddok and not(gmok or msdkok):
         return dd.DD_key(DD_keycode(key), 1)
     if type(key) == str and len(key) == 1:  # 如果不是str就不会检查第二个条件
         return Orb_Ground(char2vk(key))
@@ -90,7 +98,7 @@ def key_down(key):
 
 
 def key_up(key):
-    if ddok:
+    if ddok and not(gmok or msdkok):
         return dd.DD_key(DD_keycode(key), 2)
     if type(key) == str and len(key) == 1:  # 如果不是str就不会检查第二个条件
         return Zestium_Upper(char2vk(key))

@@ -95,23 +95,18 @@ void Check(char button, char x, char y, char wheel)  // mouse_move
 
 void Mach_Move(int x, int y, bool abs_move = false)  // moveR
 {
-    if (abs(x) > 127 || abs(y) > 127) {
-        int x_left = x; int y_left = y;
+    while (abs(x) > 127 || abs(y) > 127) {
         if (abs(x) > 127) {
             Check(0, int(x / abs(x)) * 127, 0, 0);
-            x_left = x - int(x / abs(x)) * 127;
+            x -= int(x / abs(x)) * 127;
         }
-        else { Check(0, int(x), 0, 0); x_left = 0; }
 
         if (abs(y) > 127) {
             Check(0, 0, int(y / abs(y)) * 127, 0);
-            y_left = y - int(y / abs(y)) * 127;
+            y -= int(y / abs(y)) * 127;
         }
-        else { Check(0, 0, int(y), 0); y_left = 0; }
-
-        return Mach_Move(x_left, y_left);
     }
-    else { Check(0, x, y, 0); }
+    Check(0, x, y, 0);
 }
 
 
