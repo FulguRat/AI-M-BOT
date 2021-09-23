@@ -94,7 +94,10 @@ class WindowCapture:  # 截图类
         return self.actual_x, self.actual_y
 
     def get_window_left(self):
-        return win32gui.GetWindowRect(self.outerhwnd)[0]
+        try:
+            return win32gui.GetWindowRect(self.outerhwnd)[0]
+        except pywintypes.error:
+            return 300
 
     def get_side_len(self):
         return int(self.total_h * (2/3))

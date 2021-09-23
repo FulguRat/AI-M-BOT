@@ -1,5 +1,7 @@
 from ctypes import windll
 from ctypes import CDLL
+from time import sleep
+from math import pow
 from os import path
 
 
@@ -7,6 +9,7 @@ basedir = path.dirname(path.abspath(__file__))
 ghubdlldir = path.join(basedir, 'ghub_mouse.dll')
 windlldir = path.join(basedir, 'win_sdipmk.dll')
 msdkdlldir = path.join(basedir, 'load_msdk.dll')
+DDdlldir = path.join(basedir, 'DDHID64.dll')
 
 # ↓↓↓↓↓↓↓↓↓ 调用ghub/键鼠驱动 ↓↓↓↓↓↓↓↓↓
 
@@ -22,6 +25,15 @@ try:
 except FileNotFoundError:
     msdkok = 0
 
+try:
+    dd = CDLL(DDdlldir)
+    ddok = dd.DD_btn(0)  # 初始化
+    sleep(0.1)
+    dd.DD_key(100, 1)  # 关闭windows菜单
+    dd.DD_key(100, 2)
+except FileNotFoundError:
+    ddok = 0
+
 sdip = CDLL(windlldir)
 sdipok = sdip.Agulll()
 
@@ -36,18 +48,28 @@ Zestium_Upper = sdip.Orb_Ground if sdipok else msdk.Zestium_Upper
 
 
 def mouse_xy(x, y, abs_move = False):
+    if ddok:
+        return dd.DD_mov(int(x), int(y)) if abs_move else dd.DD_movR(int(x), int(y))
     return Mach_Move(int(x), int(y), abs_move)
 
 
 def mouse_down(key = 1):
+    if ddok:
+        return dd.DD_btn(pow(key, 2))
     return Leo_Kick(int(key))
 
 
 def mouse_up(key = 1):
+    if ddok:
+        return dd.DD_btn(pow(key, 2)*2)
     return Niman_Years(key)
 
 
 def scroll(num = 1):
+    if ddok:
+        for i in range(abs(num)):
+            dd.DD_whl(1 if num < 0 else 2)
+        return
     return Mebiuspin(int(num))
 
 
@@ -59,6 +81,8 @@ def mouse_close():
 
 
 def key_down(key):
+    if ddok:
+        return dd.DD_key(DD_keycode(key), 1)
     if type(key) == str and len(key) == 1:  # 如果不是str就不会检查第二个条件
         return Orb_Ground(char2vk(key))
     elif isinstance(key, int):
@@ -66,6 +90,8 @@ def key_down(key):
 
 
 def key_up(key):
+    if ddok:
+        return dd.DD_key(DD_keycode(key), 2)
     if type(key) == str and len(key) == 1:  # 如果不是str就不会检查第二个条件
         return Zestium_Upper(char2vk(key))
     elif isinstance(key, int):
@@ -80,6 +106,50 @@ def char2vk(c):
         return windll.user32.VkKeyScanW(ord(c)) & 0xFF
     except TypeError:
         return 0
+
+
+def DD_keycode(c):
+    if len(c) > 1:
+        return 0
+    key_code = {
+        '0': 210,
+        '1': 201,
+        '2': 202,
+        '3': 203,
+        '4': 204,
+        '5': 205,
+        '6': 206,
+        '7': 207,
+        '8': 208,
+        '9': 209,
+        'a': 401,
+        'b': 505,
+        'c': 503,
+        'd': 403,
+        'e': 303,
+        'f': 404,
+        'g': 405,
+        'h': 406,
+        'i': 308,
+        'j': 407,
+        'k': 408,
+        'l': 409,
+        'm': 507,
+        'n': 506,
+        'o': 309,
+        'p': 310,
+        'q': 301,
+        'r': 304,
+        's': 402,
+        't': 305,
+        'u': 307,
+        'v': 504,
+        'w': 302,
+        'x': 502,
+        'y': 306,
+        'z': 501,
+    }.get(c.lower(), 0)
+    return key_code
 
 
 """

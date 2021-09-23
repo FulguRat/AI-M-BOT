@@ -159,7 +159,27 @@ def use_choice(rangemin, rangemax, askstring):
 
 # 简易消息框
 def MsgBox(title, text, style=0):
-    return windll.user32.MessageBoxW(0, text, title, style)
+    result = windll.user32.MessageBoxW(0, text, title, style)
+    if style in [0, 1]:
+        return result == 1
+    elif style in [3, 4]:
+        return result == 6
+
+    ##  Styles:
+    ##  0 : OK
+    ##  1 : OK | Cancel
+    ##  2 : Abort | Retry | Ignore
+    ##  3 : Yes | No | Cancel
+    ##  4 : Yes | No
+    ##  5 : Retry | Cancel
+    ##  6 : Cancel | Try Again | Continue
+
+    ##  Results:
+    ##  1 : IDOK
+    ##  2 : IDCANCEL
+    ##  3 : IDABORT
+    ##  6 : IDYES
+    ##  7 : IDNO
 
 
 # 尝试pid
@@ -196,3 +216,7 @@ class PID:
     # 更新比例P值
     def set_p(self, new_p):
         self.kp = new_p
+
+    # 获取比例P值
+    def get_p(self):
+        return self.kp

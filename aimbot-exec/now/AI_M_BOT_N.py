@@ -14,26 +14,21 @@ Screenshot method website: https://github.com/learncodebygaming/opencv_tutorials
 Mouse event method code modified from project logitech-cve
 Mouse event method website: https://github.com/ekknod/logitech-cve
 Mouse event method project Author: ekknod
+PID method Author: peizhuo_liu (RawBottle)
+PID method website: https://blog.csdn.net/peizhuo_liu/article/details/112058679
 """
 
 from multiprocessing import freeze_support
-from util import use_choice, MsgBox
-from mouse import gmok, msdkok
+from mouse import gmok, msdkok, ddok
+from util import MsgBox
 
 
 # 主程序
 if __name__ == '__main__':
-    # 为了Pyinstaller顺利生成exe
-    freeze_support()
-
-    Copyright_Information = '\n\n\n=========================\n| FREE to use 本软件免费使用\n| Author/作者: jiapai12138(killmatt01)\n| 学习交流欢迎加群: 212068326\n========================='
-    MsgBox('v2.6.4 版本更新', 'bug生成/修复\n更换权重,对cf/cs1.6/逆战支持更好\n暂时不用yolox模型(等待训练)'+Copyright_Information)
-
-    MsgBox('键鼠检测', f'罗技驱动加载状态: {gmok} (函数已稳定)\n飞易来/文盒驱动准备状态: {msdkok} (函数测试中)')
+    freeze_support()  # 为了顺利编译成exe
 
     # 选择标准/烧卡模式
-    main_model = use_choice(1, 2, '请问您的电脑是高配机吗?(1:不是, 2:是): ')
-    if main_model == 2:
+    if MsgBox('欢迎使用与交流', f'作者: jiapai12138 (killmatt01)\n学习交流欢迎加群: 212068326\n\n键鼠检测============\nDD驱动加载状态: {ddok}\n罗技驱动加载状态: {gmok}\n飞易来/文盒驱动准备状态: {msdkok}\n\n==================\n请问您的电脑是高配机吗?', 4):
         from AI_main_pow import main
     else:
         from AI_main import main

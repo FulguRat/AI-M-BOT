@@ -7,15 +7,16 @@ from win32con import VK_END, PROCESS_ALL_ACCESS
 from darknet_yolo34 import FrameDetection34
 from pynput.mouse import Listener, Button
 from torch_yolox import FrameDetectionX
+from configparser import ConfigParser
 from scrnshot import WindowCapture
 from sys import exit, platform
 from collections import deque
 from statistics import median
-from time import time, sleep
 from math import sqrt, pow
-from simple_pid import PID
 from random import uniform
 from ctypes import windll
+from time import time
+from util import PID
 import numpy as np
 import pywintypes
 import win32gui
@@ -169,25 +170,28 @@ def capturing(array, the_class_name, the_hwnd_name, lock):
         millisleep(1)  # 降低平均cpu占用
         # screenshots = win_cap.grab_screenshot()
         screenshots = win_cap.get_screenshot()
-        change_withlock(array, 0, screenshots.shape[0], lock)
-        change_withlock(array, 1, screenshots.shape[1], lock)
-        with lock:
-            shared_img = np.ndarray(screenshots.shape, dtype=screenshots.dtype, buffer=shm_img.buf)
-            shared_img[:] = screenshots[:]  # 将截取数据拷贝进分享的内存
-        if the_class_name == 'CrossFire':
-            cut_scrn = screenshots[cuth // 2 + winh // 16 : cuth // 2 + winh // 15, cutw // 2 - winw // 40 : cutw // 2 + winw // 40]  # 从截屏中截取红名区域
+        try:
+            change_withlock(array, 0, screenshots.shape[0], lock)
+            change_withlock(array, 1, screenshots.shape[1], lock)
+            with lock:
+                shared_img = np.ndarray(screenshots.shape, dtype=screenshots.dtype, buffer=shm_img.buf)
+                shared_img[:] = screenshots[:]  # 将截取数据拷贝进分享的内存
+            if the_class_name == 'CrossFire':
+                cut_scrn = screenshots[cuth // 2 + winh // 16 : cuth // 2 + winh // 15, cutw // 2 - winw // 40 : cutw // 2 + winw // 40]  # 从截屏中截取红名区域
 
-            # 将红名区域rgb转为十进制数值
-            hexcolor = []
-            for i in range(cut_scrn.shape[0]):
-                for j in range(cut_scrn.shape[1]):
-                    rgbint = cut_scrn[i][j][0]<<16 | cut_scrn[i][j][1]<<8 | cut_scrn[i][j][2]
-                    hexcolor.append(rgbint)
+                # 将红名区域rgb转为十进制数值
+                hexcolor = []
+                for i in range(cut_scrn.shape[0]):
+                    for j in range(cut_scrn.shape[1]):
+                        rgbint = cut_scrn[i][j][0]<<16 | cut_scrn[i][j][1]<<8 | cut_scrn[i][j][2]
+                        hexcolor.append(rgbint)
 
-            # 与内容中的敌方红名色库比较
-            hexcolor = np.array(hexcolor)
-            indices = np.intersect1d(cf_enemy_color, hexcolor)
-            change_withlock(array, 13, len(indices), lock)
+                # 与内容中的敌方红名色库比较
+                hexcolor = np.array(hexcolor)
+                indices = np.intersect1d(cf_enemy_color, hexcolor)
+                change_withlock(array, 13, len(indices), lock)
+        except (AttributeError, pywintypes.error):
+            pass
 
         win_left = (150 if win_cap.get_window_left() - 10 < 150 else win_cap.get_window_left() - 10)
         change_withlock(array, 3, win_left, lock)
@@ -303,7 +307,7 @@ def main():
 
     ini_sct_time = 0  # 初始化计时
     target_count, moveX, moveY, fire0pos, enemy_close, can_fire = 0, 0, 0, 0, 0, 0
-    pidx = PID(0.2, 1.0, 0.001, setpoint=0, sample_time=0.006,)  # 初始化pid
+    pidx = PID(0.2, 1.0, 0.01, 0)  # 初始化pid
     small_float = np.finfo(np.float64).eps  # 初始化一个尽可能小却小得不过分的数
     shm_show_img = shared_memory.SharedMemory(create=True, size=GetSystemMetrics(0) * GetSystemMetrics(1) * 3, name='showimg')  # 创建进程间共享内存
     existing_shm = shared_memory.SharedMemory(name='shareimg')
@@ -337,7 +341,8 @@ def main():
             moveX = FOV(moveX, arr[5]) / DPI_Var[0] * move_factor * (arr[0] / 512)
             moveY = FOV(moveY, arr[5]) / DPI_Var[0] * move_factor * (arr[1] / 320)
             pid_moveX = -pidx(moveX)
-            pid_moveY = moveY * pidx.Kp
+            pid_moveY = moveY * pidx.get_p()
+
             if arr[6] == 1:  # 主武器
                 change_withlock(arr, 10, 94.4 if enemy_close or arr[11] != 1 else 169.4, lock)
             elif arr[6] == 2:  # 副武器
@@ -348,9 +353,6 @@ def main():
             if arr[9]:
                 click_mouse(window_class_name, arr[10], can_fire)
 
-        if not (arr[6] and target_count and (arr[8] or GetAsyncKeyState(0x06) < 0)):  # 测试帮助复原
-            pidx.reset()  # relax = -pidx(0.0)
-
         with lock:
             show_img = np.ndarray(screenshot.shape, dtype=screenshot.dtype, buffer=shm_show_img.buf)
             show_img[:] = screenshot[:]  # 将截取数据拷贝进分享的内存
@@ -360,8 +362,7 @@ def main():
         ini_sct_time = time()
         process_times.append(time_used)
         med_time = median(process_times)
-        pidx.sample_time = med_time
-        pidx.Kp = 1 / pow(show_fps[0]/3, 1/3)
+        pidx.set_p(1 / pow(show_fps[0]/3, 1/3))
         show_fps[0] = 1 / med_time if med_time > 0 else 1 / (med_time + small_float)
         change_withlock(arr, 4, show_fps[0], lock)
         if len(process_times) > 119:
