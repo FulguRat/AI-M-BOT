@@ -35,7 +35,7 @@ class FrameDetectionX:
         # 检测是否在GPU上运行图像识别
         self.device_name = onnxruntime.get_device()
         try:
-            self.session = onnxruntime.InferenceSession(self.WEIGHT_FILE[0], None)  # 推理构造
+            self.session = onnxruntime.InferenceSession(self.WEIGHT_FILE[0], providers=['CUDAExecutionProvider'])  # 推理构造
         except RuntimeError:
             self.session = onnxruntime.InferenceSession(self.WEIGHT_FILE[0], providers=['CPUExecutionProvider'])  # 推理构造
             # self.session.set_providers('CPUExecutionProvider')

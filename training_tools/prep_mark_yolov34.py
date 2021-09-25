@@ -39,16 +39,13 @@ if __name__ == '__main__':
         # cv2.waitKey(1)
 
         frame_height, frame_width = pictures.shape[:2]
-        classes, scores, boxes = model.detect(pictures, 0.2, 0.3)
+        classes, scores, boxes = model.detect(pictures, 0.3, 0.3)
 
         for (classid, score, box) in zip(classes, scores, boxes):
             x, y, w, h = box
             x = x + w/2
             y = y + h/2
-            if classid == 0:
-                file_create.write(f'0 {(x/frame_width):.6f} {(y/frame_height):.6f} {(w/frame_width):.6f} {(h/frame_height):.6f}\n')
-            if classid == 1:
-                file_create.write(f'1 {(x/frame_width):.6f} {(y/frame_height):.6f} {(w/frame_width):.6f} {(h/frame_height):.6f}\n')
+            file_create.write(f'{classid:.0f} {(x/frame_width):.6f} {(y/frame_height):.6f} {(w/frame_width):.6f} {(h/frame_height):.6f}\n')
 
         file_create.close()
 

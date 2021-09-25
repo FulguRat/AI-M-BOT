@@ -1,3 +1,4 @@
+from util import is_full_screen
 from win32con import SRCCOPY
 from ctypes import windll
 import numpy as np
@@ -26,6 +27,8 @@ class WindowCapture:  # 截图类
         self.windows_class = window_class
         self.ratio_h2H, self.ratio_w2h = h2H, w2h
         self.hwnd = window_hwnd
+        if is_full_screen(window_hwnd):
+            self.hwnd = win32gui.GetDesktopWindow()
         try:
             self.outerhwnd = win32gui.FindWindow(window_class, None)
         except pywintypes.error as e:

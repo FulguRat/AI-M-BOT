@@ -1,6 +1,5 @@
-from util import set_dpi, is_full_screen, is_admin, clear, restart, millisleep, get_window_info, FOV, use_choice, move_mouse
+from util import set_dpi, is_full_screen, is_admin, clear, restart, millisleep, get_window_info, FOV, use_choice, anti_FOV
 from win32api import GetAsyncKeyState, GetCurrentProcessId, OpenProcess, GetSystemMetrics
-from mouse import mouse_down, mouse_up, mouse_close, scroll, key_down, key_up
 from win32process import SetPriorityClass, ABOVE_NORMAL_PRIORITY_CLASS
 from multiprocessing import Process, shared_memory, Array, Lock
 from win32con import VK_END, PROCESS_ALL_ACCESS
@@ -41,25 +40,6 @@ def change_withlock(arrays, var, target_var, locker):
         arrays[var] = target_var
 
 
-# 鼠标射击
-def click_mouse(win_class, rate, go_fire):
-    # 不分敌友射击
-    if arr[15]:  # GetAsyncKeyState(VK_LBUTTON) < 0
-        if time() * 1000 - arr[16] > 30.6:  # press_moment
-            mouse_up()
-    elif win_class != 'CrossFire' or arr[13]:
-        if arr[13] or go_fire:
-            if time() * 1000 - arr[17] > rate:  # release_moment
-                mouse_down()
-                change_withlock(arr, 18, arr[18] + 1, lock)
-
-    if time() * 1000 - arr[17] > 219.4:
-        change_withlock(arr, 18, 0, lock)
-
-    if arr[18] > 12:
-        change_withlock(arr, 18, 12, lock)
-
-
 # 转变状态
 def check_status(arr):
     if GetAsyncKeyState(VK_END) < 0:  # End
@@ -79,6 +59,18 @@ def check_status(arr):
         change_withlock(arr, 9, 1, lock)
     if GetAsyncKeyState(0x30) < 0:  # 0停止开火
         change_withlock(arr, 9, 0, lock)
+    if GetAsyncKeyState(0x26) < 0:  # 上方向键
+        lock_range = arr[20]
+        lock_range += 0.005
+        if lock_range > 1.0:
+            lock_range = 1.0
+        change_withlock(arr, 20, lock_range, lock)
+    if GetAsyncKeyState(0x28) < 0:  # 下方向键
+        lock_range = arr[20]
+        lock_range -= 0.005
+        if lock_range < 0.25:
+            lock_range = 0.25
+        change_withlock(arr, 20, lock_range, lock)
 
 
 # 多线程展示效果
@@ -166,6 +158,28 @@ def main():
     else:
         os.nice(1)
 
+    from mouse import mouse_down, mouse_up, mouse_close, scroll, key_down, key_up, move_mouse
+
+
+    # 鼠标射击
+    def click_mouse(win_class, rate, go_fire):
+        # 不分敌友射击
+        if arr[15]:  # GetAsyncKeyState(VK_LBUTTON) < 0
+            if time() * 1000 - arr[16] > 30.6:  # press_moment
+                mouse_up()
+        elif win_class != 'CrossFire' or arr[13]:
+            if arr[13] or go_fire:
+                if time() * 1000 - arr[17] > rate:  # release_moment
+                    mouse_down()
+                    change_withlock(arr, 18, arr[18] + 1, lock)
+
+        if time() * 1000 - arr[17] > 219.4:
+            change_withlock(arr, 18, 0, lock)
+
+        if arr[18] > 12:
+            change_withlock(arr, 18, 12, lock)
+
+
     # 滑稽/选择模型
     print('提示: 您的选择将决定使用的模型')
     Conan = use_choice(0, 2, '柯南能在本程序作者有生之年完结吗?(1:能, 2:能, 0:不能): ')
@@ -204,6 +218,7 @@ def main():
     arr[17] = time()  # 左键抬起时刻
     arr[18] = 0  # 连续射击次数
     arr[19] = 1600  # 窗口宽
+    arr[20] = 1.0  # 锁定范围
 
     # 确认大致平均后坐影响
     recoil_more = 1
@@ -254,7 +269,8 @@ def main():
 
     ini_sct_time = 0  # 初始化计时
     target_count, moveX, moveY, fire0pos, enemy_close, can_fire = 0, 0, 0, 0, 0, 0
-    pidx = PID(0.3, 1.0, 0.01, 0)  # 初始化pid
+    pidx = PID(0.3, 1.0, 0.001, 0)  # 初始化pid
+    prev_movex, prev_movey = 0, 0
     small_float = np.finfo(np.float64).eps  # 初始化一个尽可能小却小得不过分的数
     shm_show_img = shared_memory.SharedMemory(create=True, size=GetSystemMetrics(0) * GetSystemMetrics(1) * 3, name='showimg')  # 创建进程间共享内存
     cf_enemy_color = np.array([3487638, 3487639, 3487640, 3487641, 3422105, 3422106, 3422362, 3422363, 3422364, 3356828, 3356829, 3356830, 3356831, 3291295, 3291551, 3291552, 3291553, 3291554, 3226018, 3226019, 3226020, 3226276, 3226277, 3160741, 3160742, 3160743, 3160744, 3095208, 3095209, 3095465, 3095466, 3095467, 3029931, 3029932, 3029933, 3029934, 3030190, 2964654, 2964655, 2964656, 2964657, 2899121, 2899122, 2899123, 2899379, 2899380, 2833844, 2833845, 2833846, 2833847, 2768311, 2768567, 2768568, 2768569, 2768570, 2703034, 2703035, 2703036, 2703292, 2703292, 2703293, 2637757, 2637758, 2637759, 2637760, 2572224, 2572225, 2572481, 2572482, 2572483, 2506948, 2506949, 2506950, 2507206, 2507207, 2441671, 2441672, 2441673, 2441674, 2376138, 2376139, 2376395, 2376396, 2376397, 2310861, 2310862, 2310863, 2310864, 2311120, 2245584, 2245585, 2245586, 2245587, 2180051, 2180052, 2180308, 2180309, 2180310, 2114774, 2114775, 2114776, 2114777, 2049241, 2049497, 2049498, 2049499, 2049500, 1983964, 1983965, 1983966, 1984222, 1984223, 1918687, 1918688, 1918689, 1918690, 1853154, 1853155, 1853411, 1853412, 1853413, 1787877, 1787878, 1787879, 1787880, 1788136, 1722600, 1722601, 1722602, 1722603, 1657067, 1657068, 1657069, 1657325, 1657326, 1591790, 1591791, 1591792, 1591793, 1526514])  # CF敌方红名库
@@ -274,9 +290,9 @@ def main():
         # screenshot = win_cap.grab_screenshot()
         screenshot = win_cap.get_screenshot()
         try:
-            screenshot.any()
-            change_withlock(arr, 0, screenshot.shape[0], lock)
-            change_withlock(arr, 1, screenshot.shape[1], lock)
+            frame_height, frame_width = screenshot.shape[:2]
+            change_withlock(arr, 0, frame_height, lock)  # 改变共享数组中对应截屏高的数据
+            change_withlock(arr, 1, frame_width, lock)  # 改变共享数组中对应截屏宽的数据
 
             # 穿越火线检测红名
             if window_class_name == 'CrossFire':
@@ -293,6 +309,13 @@ def main():
                 hexcolor = np.array(hexcolor)
                 indices = np.intersect1d(cf_enemy_color, hexcolor)
                 change_withlock(arr, 13, len(indices), lock)
+
+            # 简易实现改变窗口范围
+            lockwinrange = arr[20] * min(frame_height, frame_width) // 2 * 2
+            cv2.rectangle(screenshot, (0, 0), (int((frame_width-lockwinrange) / 2), frame_height), (127, 127, 127), cv2.FILLED)
+            cv2.rectangle(screenshot, (int((frame_width+lockwinrange) / 2), 0), (frame_width, frame_height), (127, 127, 127), cv2.FILLED)
+            cv2.rectangle(screenshot, (int((frame_width-lockwinrange) / 2), 0), (int((frame_width+lockwinrange) / 2), int((frame_height-lockwinrange) / 2)), (127, 127, 127), cv2.FILLED)
+            cv2.rectangle(screenshot, (int((frame_width-lockwinrange) / 2), int((frame_height+lockwinrange) / 2)), (int((frame_width+lockwinrange) / 2), frame_height), (127, 127, 127), cv2.FILLED)
 
             screenshot = cv2.resize(screenshot, (512, 320), interpolation=cv2.INTER_AREA)
             win_left = (150 if win_cap.get_window_left() - 10 < 150 else win_cap.get_window_left() - 10)
@@ -314,33 +337,37 @@ def main():
                 print('窗口已最小化\n' + str(e))
                 break
 
-        if str(win32gui.GetForegroundWindow()) in (str(window_hwnd_name) + str(window_outer_hwnd)) and not test_win and arr[6]:  # 是否需要控制鼠标:
-            change_withlock(arr, 12, recoil_more * recoil_control * arr[18] / arr[6], lock)
-            moveX = FOV(moveX, arr[5]) / DPI_Var[0] * move_factor * (arr[0] / 512)
-            moveY = FOV(moveY, arr[5]) / DPI_Var[0] * move_factor * (arr[1] / 320)
-            pid_moveX = -pidx(moveX)
-            pid_moveY = moveY * pidx.get_p()
-
+        if str(win32gui.GetForegroundWindow()) in (str(window_hwnd_name) + str(window_outer_hwnd)) and not test_win:  # 是否需要控制鼠标:
             if arr[6] == 1:  # 主武器
                 change_withlock(arr, 10, 94.4 if enemy_close or arr[11] != 1 else 169.4, lock)
             elif arr[6] == 2:  # 副武器
                 change_withlock(arr, 10, 69.4 if enemy_close or arr[11] != 1 else 94.4, lock)
-            recoil_more = 1.25 if 1000/(arr[10] + 30.6) > 6 else 1
-            if target_count and (arr[8] or GetAsyncKeyState(0x06) < 0):  # XButton2
+
+            if arr[6] and target_count and (arr[8] or GetAsyncKeyState(0x06) < 0):  # XButton2
+                change_withlock(arr, 12, recoil_more * recoil_control * arr[18] / arr[6], lock)
+                act_moveX = FOV(moveX, arr[5]) / DPI_Var[0] * move_factor * arr[0] / 512
+                act_moveY = FOV(moveY, arr[5]) / DPI_Var[0] * move_factor * arr[1] / 320
+                pid_moveX = -pidx(act_moveX) - prev_movex
+                pid_moveY = act_moveY * (1 / pow(show_fps[0]/3, 1/3)) - prev_movey
+                prev_movex, prev_movey = pid_moveX, pid_moveY
+                recoil_more = 1.25 if 1000/(arr[10] + 30.6) > 6 else 1
                 move_mouse(round(pid_moveX, 3), round(pid_moveY, 3))
-            if arr[9]:
+            else:
+                prev_movex, prev_movey = 0, 0
+
+            if arr[6] and arr[9]:
                 click_mouse(window_class_name, arr[10], can_fire)
 
         with lock:
             show_img = np.ndarray(screenshot.shape, dtype=screenshot.dtype, buffer=shm_show_img.buf)
             show_img[:] = screenshot[:]  # 将截取数据拷贝进分享的内存
 
-        millisleep(1)  # 降低平均cpu占用
+        # millisleep(1)  # 降低平均cpu占用
         time_used = time() - ini_sct_time
         ini_sct_time = time()
         process_times.append(time_used)
         med_time = median(process_times)
-        pidx.set_p(1 / pow(show_fps[0]/3, 1/3))
+        pidx.set_p(1 / pow(show_fps[0]/6, 1/3))
         show_fps[0] = 1 / med_time if med_time > 0 else 1 / (med_time + small_float)
         change_withlock(arr, 4, show_fps[0], lock)
         if len(process_times) > 119:
@@ -359,5 +386,5 @@ def main():
     exit(0)
 
 
-arr = Array('d', range(20))  # 进程间分享数据
+arr = Array('d', range(30))  # 进程间分享数据
 lock = Lock()  # 锁

@@ -1,8 +1,10 @@
+from win32con import SPI_GETMOUSE, SPI_SETMOUSE, SPI_GETMOUSESPEED, SPI_SETMOUSESPEED
 from ctypes import windll
 from ctypes import CDLL
 from time import sleep
 from math import pow
 from os import path
+import win32gui
 
 
 basedir = path.dirname(path.abspath(__file__))
@@ -59,6 +61,23 @@ def mouse_xy(x, y, abs_move = False):
                     y -= abs(y)/y*127
         return dd.DD_mov(int(x), int(y)) if abs_move else dd.DD_movR(int(x), int(y))
     return Mach_Move(int(x), int(y), abs_move)
+
+
+# 移动鼠标
+def move_mouse(a, b):
+    enhanced_holdback = win32gui.SystemParametersInfo(SPI_GETMOUSE)
+    if enhanced_holdback[1]:
+        win32gui.SystemParametersInfo(SPI_SETMOUSE, [0, 0, 0], 0)
+    mouse_speed = win32gui.SystemParametersInfo(SPI_GETMOUSESPEED)
+    if mouse_speed != 10:
+        win32gui.SystemParametersInfo(SPI_SETMOUSESPEED, 10, 0)
+
+    mouse_xy(a, b)
+
+    if enhanced_holdback[1]:
+        win32gui.SystemParametersInfo(SPI_SETMOUSE, enhanced_holdback, 0)
+    if mouse_speed != 10:
+        win32gui.SystemParametersInfo(SPI_SETMOUSESPEED, mouse_speed, 0)
 
 
 def mouse_down(key = 1):

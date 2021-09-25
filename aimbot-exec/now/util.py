@@ -1,10 +1,9 @@
-from win32con import SPI_GETMOUSE, SPI_SETMOUSE, SPI_GETMOUSESPEED, SPI_SETMOUSESPEED
+from win32api import EnumDisplaySettings
 from sys import exit, executable
 from platform import release
-from mouse import mouse_xy
+from math import atan, tan
 from ctypes import windll
 from os import system
-from math import atan
 import nvidia_smi
 import pywintypes
 import win32gui
@@ -55,9 +54,10 @@ def set_dpi():
 # 检测是否全屏
 def is_full_screen(hWnd):
     try:
-        full_screen_rect = (0, 0, windll.user32.GetSystemMetrics(0), windll.user32.GetSystemMetrics(1))
+        scrnsetting = EnumDisplaySettings(None, -1)
+        full_screen_rect = (0, 0, scrnsetting.PelsWidth, scrnsetting.PelsHeight)
         window_rect = win32gui.GetWindowRect(hWnd)
-        return window_rect == full_screen_rect
+        return window_rect >= full_screen_rect
     except pywintypes.error as e:
         print('全屏检测错误\n' + str(e))
         return False
@@ -119,27 +119,16 @@ def millisleep(num):
     TimeEndPeriod(1)
 
 
-# 移动鼠标
-def move_mouse(a, b):
-    enhanced_holdback = win32gui.SystemParametersInfo(SPI_GETMOUSE)
-    if enhanced_holdback[1]:
-        win32gui.SystemParametersInfo(SPI_SETMOUSE, [0, 0, 0], 0)
-    mouse_speed = win32gui.SystemParametersInfo(SPI_GETMOUSESPEED)
-    if mouse_speed != 10:
-        win32gui.SystemParametersInfo(SPI_SETMOUSESPEED, 10, 0)
-
-    mouse_xy(round(a), round(b))
-
-    if enhanced_holdback[1]:
-        win32gui.SystemParametersInfo(SPI_SETMOUSE, enhanced_holdback, 0)
-    if mouse_speed != 10:
-        win32gui.SystemParametersInfo(SPI_SETMOUSESPEED, mouse_speed, 0)
-
-
 # 简易FOV计算
 def FOV(target_move, base_len):
     actual_move = atan(target_move/base_len) * base_len  # 弧长
     return actual_move
+
+
+# 简易反FOV计算
+def anti_FOV(actual_move, base_len):
+    target_move = tan(actual_move/base_len) * base_len
+    return target_move
 
 
 # 用户选择
