@@ -59,13 +59,21 @@ def check_status(arr):
         change_withlock(arr, 9, 1, lock)
     if GetAsyncKeyState(0x30) < 0:  # 0停止开火
         change_withlock(arr, 9, 0, lock)
-    if GetAsyncKeyState(0x26) < 0:  # 上方向键
+    if GetAsyncKeyState(0x26) < 0:  # 上方向键↑
+        move_factor = arr[21]
+        move_factor += 0.001
+        change_withlock(arr, 21, move_factor, lock)
+    if GetAsyncKeyState(0x28) < 0:  # 下方向键↓
+        move_factor = arr[21]
+        move_factor -= 0.001
+        change_withlock(arr, 21, move_factor, lock)
+    if GetAsyncKeyState(0x27) < 0:  # 右方向键→
         lock_range = arr[20]
         lock_range += 0.005
         if lock_range > 1.0:
             lock_range = 1.0
         change_withlock(arr, 20, lock_range, lock)
-    if GetAsyncKeyState(0x28) < 0:  # 下方向键
+    if GetAsyncKeyState(0x25) < 0:  # 左方向键←
         lock_range = arr[20]
         lock_range -= 0.005
         if lock_range < 0.25:
@@ -80,7 +88,6 @@ def show_frames(array):
     cv2.moveWindow('Show frame', 0, 0)
     cv2.destroyAllWindows()
     font = cv2.FONT_HERSHEY_SIMPLEX  # 效果展示字体
-    fire_target_show = ['middle', 'head', 'chest']
 
     while True:  # 等待共享内存加载完毕
         try:
@@ -100,8 +107,8 @@ def show_frames(array):
         try:
             img_ex = np.zeros((1, 1, 3), np.uint8)
             show_str0 = str('{:03.1f}'.format(array[4]))
-            show_str1 = 'Detected ' + str('{:02.0f}'.format(array[7])) + ' targets'
-            show_str2 = 'Aiming at ' + fire_target_show[int(array[11])] + ' position'
+            show_str1 = 'Move factor is about ' + str(array[21])
+            show_str2 = 'Lock size is around ' + str(array[20])
             show_str3 = 'Fire rate is at ' + str('{:02.0f}'.format((1000 / (array[10] + 30.6)))) + ' RPS'
             show_str4 = 'Please enjoy coding ^_^' if array[8] else 'Please enjoy coding @_@'
             if show_img.any():
@@ -219,6 +226,7 @@ def main():
     arr[18] = 0  # 连续射击次数
     arr[19] = 1600  # 窗口宽
     arr[20] = 1.0  # 锁定范围
+    arr[21] = 0.0  # 鼠标移动系数
 
     # 确认大致平均后坐影响
     recoil_more = 1
@@ -230,7 +238,7 @@ def main():
     }.get(window_class_name, 2)
 
     # 测试过的几个游戏的移动系数,鼠标灵敏度设置看备注(800dpi)
-    move_factor = {
+    arr[21] = {
         'CrossFire': 1.333,  # 32
         'Valve001': 1.667,  # 2.5
         'LaunchCombatUWindowsClient': 1.319,  # 10.0
@@ -311,11 +319,12 @@ def main():
                 change_withlock(arr, 13, len(indices), lock)
 
             # 简易实现改变窗口范围
-            lockwinrange = arr[20] * min(frame_height, frame_width) // 2 * 2
-            cv2.rectangle(screenshot, (0, 0), (int((frame_width-lockwinrange) / 2), frame_height), (127, 127, 127), cv2.FILLED)
-            cv2.rectangle(screenshot, (int((frame_width+lockwinrange) / 2), 0), (frame_width, frame_height), (127, 127, 127), cv2.FILLED)
-            cv2.rectangle(screenshot, (int((frame_width-lockwinrange) / 2), 0), (int((frame_width+lockwinrange) / 2), int((frame_height-lockwinrange) / 2)), (127, 127, 127), cv2.FILLED)
-            cv2.rectangle(screenshot, (int((frame_width-lockwinrange) / 2), int((frame_height+lockwinrange) / 2)), (int((frame_width+lockwinrange) / 2), frame_height), (127, 127, 127), cv2.FILLED)
+            lockwinrangew = arr[20] * frame_width // 2 * 2
+            lockwinrangeh = arr[20] * frame_height // 2 * 2
+            cv2.rectangle(screenshot, (0, 0), (int((frame_width-lockwinrangew) / 2), frame_height), (127, 127, 127), cv2.FILLED)
+            cv2.rectangle(screenshot, (int((frame_width+lockwinrangew) / 2), 0), (frame_width, frame_height), (127, 127, 127), cv2.FILLED)
+            cv2.rectangle(screenshot, (int((frame_width-lockwinrangew) / 2), 0), (int((frame_width+lockwinrangew) / 2), int((frame_height-lockwinrangeh) / 2)), (127, 127, 127), cv2.FILLED)
+            cv2.rectangle(screenshot, (int((frame_width-lockwinrangew) / 2), int((frame_height+lockwinrangeh) / 2)), (int((frame_width+lockwinrangew) / 2), frame_height), (127, 127, 127), cv2.FILLED)
 
             screenshot = cv2.resize(screenshot, (512, 320), interpolation=cv2.INTER_AREA)
             win_left = (150 if win_cap.get_window_left() - 10 < 150 else win_cap.get_window_left() - 10)
@@ -345,8 +354,8 @@ def main():
 
             if arr[6] and target_count and (arr[8] or GetAsyncKeyState(0x06) < 0):  # XButton2
                 change_withlock(arr, 12, recoil_more * recoil_control * arr[18] / arr[6], lock)
-                act_moveX = FOV(moveX, arr[5]) / DPI_Var[0] * move_factor * arr[0] / 512
-                act_moveY = FOV(moveY, arr[5]) / DPI_Var[0] * move_factor * arr[1] / 320
+                act_moveX = FOV(moveX, arr[5]) / DPI_Var[0] * arr[21] * arr[0] / 512
+                act_moveY = FOV(moveY, arr[5]) / DPI_Var[0] * arr[21] * arr[1] / 320
                 pid_moveX = -pidx(act_moveX) - prev_movex
                 pid_moveY = act_moveY * (1 / pow(show_fps[0]/3, 1/3)) - prev_movey
                 prev_movex, prev_movey = pid_moveX, pid_moveY
@@ -367,10 +376,10 @@ def main():
         ini_sct_time = time()
         process_times.append(time_used)
         med_time = median(process_times)
-        pidx.set_p(1 / pow(show_fps[0]/6, 1/3))
+        pidx.set_p(1 / pow(show_fps[0]/3, 1/3))
         show_fps[0] = 1 / med_time if med_time > 0 else 1 / (med_time + small_float)
         change_withlock(arr, 4, show_fps[0], lock)
-        if len(process_times) > 119:
+        if len(process_times) > 29:
             process_times.popleft()
 
     print('关闭进程中......')

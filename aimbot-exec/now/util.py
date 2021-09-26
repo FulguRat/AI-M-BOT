@@ -55,9 +55,10 @@ def set_dpi():
 def is_full_screen(hWnd):
     try:
         scrnsetting = EnumDisplaySettings(None, -1)
-        full_screen_rect = (0, 0, scrnsetting.PelsWidth, scrnsetting.PelsHeight)
+        full_screen_wh = (scrnsetting.PelsWidth, scrnsetting.PelsHeight)
         window_rect = win32gui.GetWindowRect(hWnd)
-        return window_rect >= full_screen_rect
+        window_wh = (window_rect[2], window_rect[3])
+        return window_wh >= full_screen_wh
     except pywintypes.error as e:
         print('全屏检测错误\n' + str(e))
         return False
@@ -85,29 +86,29 @@ def clear():
 
 # 确认窗口句柄与类名
 def get_window_info():
-    supported_games = 'Valve001 CrossFire LaunchUnrealUWindowsClient LaunchCombatUWindowsClient UnrealWindow UnityWndClass'
     test_window = 'Notepad3 PX_WINDOW_CLASS Notepad Notepad++'
-    emulator_window = 'BS2CHINAUI Qt5154QWindowOwnDCIcon LSPlayerMainFrame TXGuiFoundation Qt5QWindowIcon LDPlayerMainFrame'
     class_name, hwnd_var = None, None
     testing_purpose = False
-    while not hwnd_var:  # 等待游戏窗口出现
+    found_window = False
+    while not found_window:  # 等待游戏窗口出现
         millisleep(3000)
         try:
             hwnd_active = win32gui.GetForegroundWindow()
+            title_name = win32gui.GetWindowText(hwnd_active)
             class_name = win32gui.GetClassName(hwnd_active)
-            if class_name not in (supported_games + test_window + emulator_window):
-                print('请使支持的游戏/程序窗口成为活动窗口...')
-                continue
-            else:
+            if MsgBox('这是你需要的游戏窗口名称吗?(请开启游戏窗口化)', title_name, style=4):
                 outer_hwnd = hwnd_var = win32gui.FindWindow(class_name, None)
-                if class_name in emulator_window:
-                    hwnd_var = win32gui.FindWindowEx(hwnd_var, None, None, None)
-                elif class_name in test_window:
+                inner_hwnd = win32gui.FindWindowEx(hwnd_var, None, None, None)
+                if inner_hwnd and win32gui.GetClientRect(inner_hwnd) != (0, 0, 0, 0):
+                    hwnd_var = inner_hwnd
+                if class_name in test_window:
                     testing_purpose = True
-                print('已找到窗口')
+
+                print('已找到并确认窗口窗口')
+                found_window = True
         except pywintypes.error:
             print('您可能正使用沙盒,目前不支持沙盒使用')
-            exit(0)
+            continue
 
     return class_name, hwnd_var, outer_hwnd, testing_purpose
 
