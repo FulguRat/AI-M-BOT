@@ -414,7 +414,7 @@ def main():
         change_withlock(arr, 4, show_fps[0], lock)
         if len(process_times) > show_fps[0]:
             process_times.popleft()
-        if len(move_recordx) > show_fps[0]/3:
+        if len(move_recordx) > round(sqrt(show_fps[0]*2)):
             move_recordx.popleft()
 
     print('关闭进程中......')
