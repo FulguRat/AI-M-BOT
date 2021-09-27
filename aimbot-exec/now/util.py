@@ -55,10 +55,9 @@ def set_dpi():
 def is_full_screen(hWnd):
     try:
         scrnsetting = EnumDisplaySettings(None, -1)
-        full_screen_wh = (scrnsetting.PelsWidth, scrnsetting.PelsHeight)
-        window_rect = win32gui.GetWindowRect(hWnd)
-        window_wh = (window_rect[2], window_rect[3])
-        return window_wh >= full_screen_wh
+        full_screen_rect = (0, 0, scrnsetting.PelsWidth, scrnsetting.PelsHeight)
+        client_rect = win32gui.GetClientRect(hWnd)
+        return client_rect >= full_screen_rect
     except pywintypes.error as e:
         print('全屏检测错误\n' + str(e))
         return False
