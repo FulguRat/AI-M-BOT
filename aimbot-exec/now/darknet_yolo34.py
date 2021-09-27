@@ -59,7 +59,7 @@ class FrameDetection34:
         except cv2.error as e:
             print('getCudaEnabledDeviceCount函数运行错误\n' + str(e))
 
-    def detect(self, frames, recoil_coty, windoww = 1600):
+    def detect(self, frames, recoil_coty, windoww = 1600, adv_move=0):
         try:
             if frames.any():
                 frame_height, frame_width = frames.shape[:2]
@@ -93,7 +93,7 @@ class FrameDetection34:
                 threat_var *= 5
             threat_list.append([threat_var, box, classid])
 
-        x0, y0, fire_pos, fire_close, fire_ok, frames = threat_handling(frames, windoww, threat_list, recoil_coty, frame_height, frame_width, self.total_classes)
+        x0, y0, fire_pos, fire_close, fire_ok, frames = threat_handling(frames, windoww, threat_list, recoil_coty, frame_height, frame_width, self.total_classes, adv_move)
 
         return len(threat_list), int(x0), int(y0), fire_pos, fire_close, fire_ok, frames
 

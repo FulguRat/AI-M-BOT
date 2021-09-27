@@ -1,7 +1,7 @@
 from cv2 import line
 
 
-def threat_handling(frame, window_w, threat_alist, recoil_ctrl, frame_height, frame_width, class_num):
+def threat_handling(frame, window_w, threat_alist, recoil_ctrl, frame_height, frame_width, class_num, adv_move=0):
     x0, y0, fire_pos, fire_close, fire_ok = 0, 0, 0, 0, 0
     if len(threat_alist):
         threat_alist.sort(key=lambda x:x[0])
@@ -25,6 +25,7 @@ def threat_handling(frame, window_w, threat_alist, recoil_ctrl, frame_height, fr
                 fire_pos = 1
 
         y0 += recoil_ctrl  # 后座控制
+        x0 += adv_move  # 提前枪
         xpos, ypos = x0 + frame_width / 2, y0 + frame_height / 2
         line(frame, (frame_width // 2, frame_height // 2), (int(xpos), int(ypos)), (0, 0, 255), 2)
 

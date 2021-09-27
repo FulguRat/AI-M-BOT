@@ -255,6 +255,7 @@ def main():
     DPI_Var[0] = 1.0 if DPI_Var[0] == 0.0 else DPI_Var[0]
 
     process_times = deque()
+    move_recordx = deque()
 
     arr[0] = 0  # 截图宽
     arr[1] = 0  # 截图高
@@ -329,11 +330,12 @@ def main():
 
     ini_sct_time = 0  # 初始化计时
     target_count, moveX, moveY, fire0pos, enemy_close, can_fire = 0, 0, 0, 0, 0, 0
-    pidx = PID(0.3, 1.0, 0.001, 0)  # 初始化pid
+    pidx = PID(0.3, 0.66, 0.01, 0)  # 初始化pid
     prev_movex, prev_movey = 0, 0
     small_float = np.finfo(np.float64).eps  # 初始化一个尽可能小却小得不过分的数
     shm_show_img = shared_memory.SharedMemory(create=True, size=GetSystemMetrics(0) * GetSystemMetrics(1) * 3, name='showimg')  # 创建进程间共享内存
     existing_shm = shared_memory.SharedMemory(name='shareimg')
+    opt_trackingx = 0
 
     while not arr[14]:
         try:
@@ -362,7 +364,7 @@ def main():
 
         if Conan:
             try:
-                target_count, moveX, moveY, fire0pos, enemy_close, can_fire, screenshot = Analysis.detect(screenshot, arr[12], arr[19])
+                target_count, moveX, moveY, fire0pos, enemy_close, can_fire, screenshot = Analysis.detect(screenshot, arr[12], arr[19], opt_trackingx)
                 change_withlock(arr, 7, target_count, lock)
                 change_withlock(arr, 11, fire0pos, lock)
             except (ValueError, UnboundLocalError) as e:
@@ -377,14 +379,21 @@ def main():
 
             if arr[6] and target_count and (arr[8] or GetAsyncKeyState(0x06) < 0):  # XButton2
                 change_withlock(arr, 12, recoil_more * recoil_control * arr[18] / arr[6], lock)
-                moveX = FOV(moveX, arr[5]) / DPI_Var[0] * arr[21] * (arr[0] / 512)
-                moveY = FOV(moveY, arr[5]) / DPI_Var[0] * arr[21] * (arr[1] / 320)
-                prev_movex = pid_moveX = -pidx(moveX) - prev_movex
-                prev_movey = pid_moveY = moveY * (1 / pow(show_fps[0]/3, 1/3)) - prev_movey
+                act_moveX = FOV(moveX, arr[5]) / DPI_Var[0] * arr[21] * arr[0] / 512
+                act_moveY = FOV(moveY, arr[5]) / DPI_Var[0] * arr[21] * arr[1] / 320
+                pid_moveX = -pidx(act_moveX) - prev_movex
+                pid_moveY = act_moveY * (1 / pow(show_fps[0]/3, 1/3)) - prev_movey
+                prev_movex, prev_movey = pid_moveX, pid_moveY
+
+                move_recordx.append(pid_moveX)
+                opt_trackingx = median(move_recordx)*2.7
+
                 recoil_more = 1.25 if 1000/(arr[10] + 30.6) > 6 else 1
                 move_mouse(round(pid_moveX, 3), round(pid_moveY, 3))
             else:
                 prev_movex, prev_movey = 0, 0
+                move_recordx.append(0)
+                opt_trackingx = 0
 
             if arr[6] and arr[9]:
                 click_mouse(window_class_name, arr[10], can_fire)
@@ -394,6 +403,8 @@ def main():
             show_img[:] = screenshot[:]  # 将截取数据拷贝进分享的内存
 
         # millisleep(1)  # 降低平均cpu占用
+        if F11_Mode:
+            check_status(arr)
         time_used = time() - ini_sct_time
         ini_sct_time = time()
         process_times.append(time_used)
@@ -401,8 +412,10 @@ def main():
         pidx.set_p(1 / pow(show_fps[0]/3, 1/3))
         show_fps[0] = 1 / med_time if med_time > 0 else 1 / (med_time + small_float)
         change_withlock(arr, 4, show_fps[0], lock)
-        if len(process_times) > 29:
+        if len(process_times) > show_fps[0]:
             process_times.popleft()
+        if len(move_recordx) > show_fps[0]/3:
+            move_recordx.popleft()
 
     print('关闭进程中......')
     change_withlock(arr, 14, 1, lock)

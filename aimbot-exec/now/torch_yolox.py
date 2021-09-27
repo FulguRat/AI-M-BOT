@@ -61,7 +61,7 @@ class FrameDetectionX:
         for i in range(len(self.class_names)):
             self.COLORS.append(tuple(np.random.randint(256, size=3).tolist()))
 
-    def detect(self, frames, recoil_coty, windoww = 1600):
+    def detect(self, frames, recoil_coty, windoww=1600, adv_move=0):
         try:
             if frames.any():
                 frame_height, frame_width = frames.shape[:2]
@@ -111,7 +111,7 @@ class FrameDetectionX:
                     threat_var *= 5
                 threat_list.append([threat_var, [x, y, w, h], final_cls_ind])
 
-        x0, y0, fire_pos, fire_close, fire_ok, frames = threat_handling(frames, windoww, threat_list, recoil_coty, frame_height, frame_width, self.total_classes)
+        x0, y0, fire_pos, fire_close, fire_ok, frames = threat_handling(frames, windoww, threat_list, recoil_coty, frame_height, frame_width, self.total_classes, adv_move)
 
         return len(threat_list), int(x0), int(y0), fire_pos, fire_close, fire_ok, frames
 
