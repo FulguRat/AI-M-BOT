@@ -11,7 +11,7 @@ class FrameDetection34:
     # 类属性
     side_width, side_height = 512, 320  # 输入尺寸
     conf_thd = 0.5  # 置信度阀值
-    nms_thd = 0.3  # 非极大值抑制
+    nms_thd = 0.45  # 非极大值抑制
     win_class_name = None  # 窗口类名
     class_names = None  # 检测类名
     total_classes = 1  # 模型类数量
@@ -23,12 +23,8 @@ class FrameDetection34:
     # 构造函数
     def __init__(self, hwnd_value):
         self.win_class_name = win32gui.GetClassName(hwnd_value)
-        self.nms_thd = {
-            'Valve001': 0.3,
-            'CrossFire': 0.3,
-        }.get(self.win_class_name, 0.3)
-
         load_file('yolov4-tiny', self.CONFIG_FILE, self.WEIGHT_FILE)
+
         self.net = cv2.dnn.readNet(self.CONFIG_FILE[0], self.WEIGHT_FILE[0])  # 读取权重与配置文件
         self.model = cv2.dnn_DetectionModel(self.net)
         self.model.setInputParams(size=(self.side_width, self.side_height), scale=1/255, swapRB=False)
