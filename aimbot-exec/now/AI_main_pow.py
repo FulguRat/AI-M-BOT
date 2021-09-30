@@ -342,7 +342,7 @@ def main():
 
     ini_sct_time = 0  # 初始化计时
     target_count, moveX, moveY, fire0pos, enemy_close, can_fire = 0, 0, 0, 0, 0, 0
-    pidx = PID(0.3, 0.666, 0.01, 0)  # 初始化pid
+    pidx = PID(0.3, 0.875, 0.01, 0)  # 初始化pid
     prev_movex, prev_movey = 0, 0
     small_float = np.finfo(np.float64).eps  # 初始化一个尽可能小却小得不过分的数
     shm_show_img = shared_memory.SharedMemory(create=True, size=GetSystemMetrics(0) * GetSystemMetrics(1) * 3, name='showimg')  # 创建进程间共享内存
@@ -400,7 +400,7 @@ def main():
                 prev_movex, prev_movey = pid_moveX, pid_moveY
 
                 move_recordx.append(pid_moveX)
-                opt_trackingx = median(move_recordx)*2.7
+                opt_trackingx = median(move_recordx)*2.1 if GetAsyncKeyState(0x45) < 0 else 0  # E
 
                 recoil_more = 1.25 if 1000/(arr[10] + 30.6) > 6 else 1
                 move_mouse(round(pid_moveX, 3), round(pid_moveY, 3))
@@ -423,9 +423,9 @@ def main():
         ini_sct_time = time()
         process_times.append(time_used)
         med_time = median(process_times)
-        pidx.set_p(1 / pow(show_fps[0], 1/3))
+        pidx.set_p(1 / pow(show_fps[0]/3, 1/3))
         show_fps[0] = 1 / med_time if med_time > 0 else 1 / (med_time + small_float)
-        change_withlock(arr, 4, show_fps[0], lock)
+        change_withlock(arr, 4, round(show_fps[0]), lock)
         if len(process_times) > show_fps[0]:
             process_times.popleft()
         if len(move_recordx) > sqrt(show_fps[0]):
