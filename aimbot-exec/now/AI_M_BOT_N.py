@@ -19,7 +19,6 @@ PID method website: https://blog.csdn.net/peizhuo_liu/article/details/112058679
 """
 
 from multiprocessing import freeze_support
-from mouse import gmok, msdkok, ddok
 from util import MsgBox
 
 
@@ -28,7 +27,7 @@ if __name__ == '__main__':
     freeze_support()  # 为了顺利编译成exe
 
     # 选择标准/烧卡模式
-    if MsgBox('欢迎使用与交流', f'作者: jiapai12138 (killmatt01)\n学习交流欢迎加群: 212068326\n\n键鼠检测============\nDD驱动加载状态: {ddok}\n罗技驱动加载状态: {gmok}\n飞易来/文盒驱动准备状态: {msdkok}\n\n\n==================\n请使游戏窗口化运行\n请问您的电脑是高配机吗?', 4):
+    if MsgBox('欢迎使用与交流', f'作者: jiapai12138 (killmatt01)\n学习交流欢迎加群: 212068326\n\n==================\n请使游戏窗口化运行\n请问您的电脑是高配机吗?', 4):
         from AI_main_pow import main
     else:
         from AI_main import main

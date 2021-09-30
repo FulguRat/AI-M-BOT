@@ -5,15 +5,14 @@ from multiprocessing import Process, shared_memory, Array, Lock
 from win32con import VK_END, PROCESS_ALL_ACCESS
 from pynput.mouse import Listener, Button
 from configparser import ConfigParser
-from scrnshot import WindowCapture
 from sys import exit, platform
 from collections import deque
 from statistics import median
+from util import PID, MsgBox
 from math import sqrt, pow
 from random import uniform
 from ctypes import windll
 from time import time
-from util import PID
 import numpy as np
 import pywintypes
 import win32gui
@@ -165,8 +164,9 @@ def main():
     else:
         os.nice(1)
 
-    from mouse import mouse_down, mouse_up, mouse_close, scroll, key_down, key_up, move_mouse
-
+    from scrnshot import WindowCapture
+    from mouse import mouse_down, mouse_up, mouse_close, scroll, key_down, key_up, move_mouse, gmok, msdkok, ddok
+    MsgBox('键鼠检测', f'=============\nDD  驱动加载状态: {ddok}\n罗技驱动加载状态: {gmok}\n盒子驱动准备状态: {msdkok}\n', 0)
 
     # 鼠标射击
     def click_mouse(win_class, rate, go_fire):

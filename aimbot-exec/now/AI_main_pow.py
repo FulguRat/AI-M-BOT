@@ -5,15 +5,14 @@ from multiprocessing import Process, shared_memory, Array, Lock
 from win32con import VK_END, PROCESS_ALL_ACCESS
 from pynput.mouse import Listener, Button
 from configparser import ConfigParser
-from scrnshot import WindowCapture
 from sys import exit, platform
 from collections import deque
 from statistics import median
+from util import PID, MsgBox
 from math import sqrt, pow
 from random import uniform
 from ctypes import windll
 from time import time
-from util import PID
 import numpy as np
 import pywintypes
 import win32gui
@@ -149,6 +148,7 @@ def mouse_detection(array, lock):
 
 # 截图进程
 def capturing(array, the_class_name, the_hwnd_name, lock):
+    from scrnshot import WindowCapture
     shm_img = shared_memory.SharedMemory(create=True, size=GetSystemMetrics(0) * GetSystemMetrics(1) * 3, name='shareimg')  # 创建进程间共享内存
     cf_enemy_color = np.array([3487638, 3487639, 3487640, 3487641, 3422105, 3422106, 3422362, 3422363, 3422364, 3356828, 3356829, 3356830, 3356831, 3291295, 3291551, 3291552, 3291553, 3291554, 3226018, 3226019, 3226020, 3226276, 3226277, 3160741, 3160742, 3160743, 3160744, 3095208, 3095209, 3095465, 3095466, 3095467, 3029931, 3029932, 3029933, 3029934, 3030190, 2964654, 2964655, 2964656, 2964657, 2899121, 2899122, 2899123, 2899379, 2899380, 2833844, 2833845, 2833846, 2833847, 2768311, 2768567, 2768568, 2768569, 2768570, 2703034, 2703035, 2703036, 2703292, 2703292, 2703293, 2637757, 2637758, 2637759, 2637760, 2572224, 2572225, 2572481, 2572482, 2572483, 2506948, 2506949, 2506950, 2507206, 2507207, 2441671, 2441672, 2441673, 2441674, 2376138, 2376139, 2376395, 2376396, 2376397, 2310861, 2310862, 2310863, 2310864, 2311120, 2245584, 2245585, 2245586, 2245587, 2180051, 2180052, 2180308, 2180309, 2180310, 2114774, 2114775, 2114776, 2114777, 2049241, 2049497, 2049498, 2049499, 2049500, 1983964, 1983965, 1983966, 1984222, 1984223, 1918687, 1918688, 1918689, 1918690, 1853154, 1853155, 1853411, 1853412, 1853413, 1787877, 1787878, 1787879, 1787880, 1788136, 1722600, 1722601, 1722602, 1722603, 1657067, 1657068, 1657069, 1657325, 1657326, 1591790, 1591791, 1591792, 1591793, 1526514])  # CF敌方红名库
 
@@ -215,8 +215,8 @@ def main():
     else:
         os.nice(1)
 
-    from mouse import mouse_down, mouse_up, mouse_close, scroll, key_down, key_up, move_mouse
-
+    from mouse import mouse_down, mouse_up, mouse_close, scroll, key_down, key_up, move_mouse, gmok, msdkok, ddok
+    MsgBox('键鼠检测', f'=============\nDD  驱动加载状态: {ddok}\n罗技驱动加载状态: {gmok}\n盒子驱动准备状态: {msdkok}\n', 0)
 
     # 鼠标射击
     def click_mouse(win_class, rate, go_fire):
