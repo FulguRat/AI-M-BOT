@@ -86,7 +86,7 @@ class FrameDetection34:
             dist = sqrt(pow(frame_width / 2 - (x + w / 2), 2) + pow(frame_height / 2 - (y + h * h_factor), 2))
             threat_var = -(pow(w * h, 1/2) / dist * score if dist else 9999)
             if classid == 0 and self.total_classes > 1:
-                threat_var *= 5
+                threat_var *= 4
             threat_list.append([threat_var, box, classid])
 
         x0, y0, fire_pos, fire_close, fire_ok, frames = threat_handling(frames, windoww, threat_list, recoil_coty, frame_height, frame_width, self.total_classes, adv_move)

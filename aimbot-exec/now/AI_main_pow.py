@@ -3,9 +3,7 @@ from win32api import GetAsyncKeyState, GetCurrentProcessId, OpenProcess, GetSyst
 from win32process import SetPriorityClass, ABOVE_NORMAL_PRIORITY_CLASS
 from multiprocessing import Process, shared_memory, Array, Lock
 from win32con import VK_END, PROCESS_ALL_ACCESS
-from darknet_yolo34 import FrameDetection34
 from pynput.mouse import Listener, Button
-from torch_yolox import FrameDetectionX
 from configparser import ConfigParser
 from scrnshot import WindowCapture
 from sys import exit, platform
@@ -66,6 +64,8 @@ def check_status(arr):
     if GetAsyncKeyState(0x28) < 0:  # 下方向键↓
         move_factor = arr[21]
         move_factor -= 0.001
+        if move_factor < 0.01:
+            move_factor = 0.01
         change_withlock(arr, 21, move_factor, lock)
     if GetAsyncKeyState(0x27) < 0:  # 右方向键→
         lock_range = arr[20]
@@ -319,7 +319,19 @@ def main():
     print(win_pos[0], win_pos[1], win_client_rect[2], win_client_rect[3])
 
     # 初始化分析类
-    (Analysis, string_model) = (FrameDetection34(window_hwnd_name), '您正使用yolov4-tiny模型') if Conan == 1 else (FrameDetectionX(window_hwnd_name), '您正使用yolox-tiny模型')
+    if Conan == 1:
+        from darknet_yolo34 import FrameDetection34
+        Analysis = FrameDetection34(window_hwnd_name)
+        string_model = '您正使用yolov4-tiny模型'
+    elif Conan == 2:
+        from torch_yolox import FrameDetectionX
+        Analysis = FrameDetectionX(window_hwnd_name)
+        string_model = '您正使用yolox-tiny模型'
+    elif Conan == 0:
+        from torch_yolo5 import FrameDetection5
+        Analysis = FrameDetection5(window_hwnd_name)
+        string_model = '您正使用yolov5-s模型'
+
     print(string_model)
 
     # 等待截图类初始化
@@ -330,7 +342,7 @@ def main():
 
     ini_sct_time = 0  # 初始化计时
     target_count, moveX, moveY, fire0pos, enemy_close, can_fire = 0, 0, 0, 0, 0, 0
-    pidx = PID(0.3, 0.66, 0.01, 0)  # 初始化pid
+    pidx = PID(0.3, 0.666, 0.01, 0)  # 初始化pid
     prev_movex, prev_movey = 0, 0
     small_float = np.finfo(np.float64).eps  # 初始化一个尽可能小却小得不过分的数
     shm_show_img = shared_memory.SharedMemory(create=True, size=GetSystemMetrics(0) * GetSystemMetrics(1) * 3, name='showimg')  # 创建进程间共享内存
@@ -357,10 +369,12 @@ def main():
 
         except (AttributeError, pywintypes.error) as e:
             print('窗口已关闭\n' + str(e))
-            break
+            millisleep(1)
+            continue
         except cv2.error as e:
             print('窗口已最小化\n' + str(e))
-            break
+            millisleep(1)
+            continue
 
         if Conan:
             try:
@@ -409,12 +423,12 @@ def main():
         ini_sct_time = time()
         process_times.append(time_used)
         med_time = median(process_times)
-        pidx.set_p(1 / pow(show_fps[0]/3, 1/3))
+        pidx.set_p(1 / pow(show_fps[0], 1/3))
         show_fps[0] = 1 / med_time if med_time > 0 else 1 / (med_time + small_float)
         change_withlock(arr, 4, show_fps[0], lock)
         if len(process_times) > show_fps[0]:
             process_times.popleft()
-        if len(move_recordx) > round(sqrt(show_fps[0]*2)):
+        if len(move_recordx) > sqrt(show_fps[0]):
             move_recordx.popleft()
 
     print('关闭进程中......')
