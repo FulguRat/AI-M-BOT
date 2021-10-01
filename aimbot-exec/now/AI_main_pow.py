@@ -77,6 +77,7 @@ def check_status(arr):
         lock_range -= 0.005
         if lock_range < 0.25:
             lock_range = 0.25
+        change_withlock(arr, 20, lock_range, lock)
 
 
 # 多线程展示效果
