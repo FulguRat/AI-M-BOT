@@ -94,7 +94,7 @@ void Orb_Ground(char key)  // key_down
 	ip.ki.time = 0;
 	ip.ki.dwExtraInfo = 0;
 	ip.ki.wVk = key;
-	ip.ki.dwFlags = 0;  //0Ϊ����
+	ip.ki.dwFlags = 0;  //0为按下
 	SendInput(1, &ip, sizeof(INPUT));
 }
 
