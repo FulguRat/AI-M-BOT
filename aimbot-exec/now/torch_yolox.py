@@ -55,7 +55,7 @@ class FrameDetectionX:
         except FileNotFoundError:
             self.class_names = ['human-head', 'human-body']
         for i in range(len(self.class_names)):
-            self.COLORS.append(tuple(np.random.randint(256, size=3).tolist()))
+            self.COLORS.append(tuple(16*x-1 for x in np.random.randint(16, size=3).tolist()))
 
     def detect(self, frames, recoil_coty, windoww=1600, adv_move=0):
         try:

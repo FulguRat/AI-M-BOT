@@ -106,8 +106,8 @@ def show_frames(array):
         try:
             img_ex = np.zeros((1, 1, 3), np.uint8)
             show_str0 = str('{:03.1f}'.format(array[4]))
-            show_str1 = 'Move factor is about ' + str(array[21])
-            show_str2 = 'Lock size is around ' + str(array[20])
+            show_str1 = 'Move factor is about ' + str(round(array[21], 3))
+            show_str2 = 'Lock size is around ' + str(round(array[20], 3))
             show_str3 = 'Fire rate is at ' + str('{:02.0f}'.format((1000 / (array[10] + 30.6)))) + ' RPS'
             show_str4 = 'Please enjoy coding ^_^' if array[8] else 'Please enjoy coding @_@'
             if show_img.any():
