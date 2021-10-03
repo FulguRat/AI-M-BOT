@@ -169,9 +169,7 @@ class ConfusionMatrix:
             labels = (0 < len(names) < 99) and len(names) == self.nc  # apply names to ticklabels
             with warnings.catch_warnings():
                 warnings.simplefilter('ignore')  # suppress empty matrix RuntimeWarning: All-NaN slice encountered
-                sn.heatmap(array, annot=self.nc < 30, annot_kws={"size": 8}, cmap='Blues', fmt='.2f', square=True,
-                           xticklabels=names + ['background FP'] if labels else "auto",
-                           yticklabels=names + ['background FN'] if labels else "auto").set_facecolor((1, 1, 1))
+                sn.heatmap(array, annot=self.nc < 30, annot_kws={"size": 8}, cmap='Blues', fmt='.2f', square=True, xticklabels=names + ['background FP'] if labels else "auto", yticklabels=names + ['background FN'] if labels else "auto").set_facecolor((1, 1, 1))
             fig.axes[0].set_xlabel('True')
             fig.axes[0].set_ylabel('Predicted')
             fig.savefig(Path(save_dir) / 'confusion_matrix.png', dpi=250)
@@ -268,7 +266,7 @@ def bbox_ioa(box1, box2, eps=1E-7):
 
     # Intersection area
     inter_area = (np.minimum(b1_x2, b2_x2) - np.maximum(b1_x1, b2_x1)).clip(0) * \
-                 (np.minimum(b1_y2, b2_y2) - np.maximum(b1_y1, b2_y1)).clip(0)
+                (np.minimum(b1_y2, b2_y2) - np.maximum(b1_y1, b2_y1)).clip(0)
 
     # box2 area
     box2_area = (b2_x2 - b2_x1) * (b2_y2 - b2_y1) + eps

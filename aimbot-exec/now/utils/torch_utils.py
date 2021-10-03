@@ -110,7 +110,7 @@ def profile(input, ops, n=10, device=None):
     logging.basicConfig(format="%(message)s", level=logging.INFO)
     device = device or select_device()
     print(f"{'Params':>12s}{'GFLOPs':>12s}{'GPU_mem (GB)':>14s}{'forward (ms)':>14s}{'backward (ms)':>14s}"
-          f"{'input':>24s}{'output':>24s}")
+        f"{'input':>24s}{'output':>24s}")
 
     for x in input if isinstance(input, list) else [input]:
         x = x.to(device)
@@ -205,12 +205,12 @@ def prune(model, amount=0.3):
 def fuse_conv_and_bn(conv, bn):
     # Fuse convolution and batchnorm layers https://tehnokv.com/posts/fusing-batchnorm-and-conv/
     fusedconv = nn.Conv2d(conv.in_channels,
-                          conv.out_channels,
-                          kernel_size=conv.kernel_size,
-                          stride=conv.stride,
-                          padding=conv.padding,
-                          groups=conv.groups,
-                          bias=True).requires_grad_(False).to(conv.weight.device)
+                        conv.out_channels,
+                        kernel_size=conv.kernel_size,
+                        stride=conv.stride,
+                        padding=conv.padding,
+                        groups=conv.groups,
+                        bias=True).requires_grad_(False).to(conv.weight.device)
 
     # prepare filters
     w_conv = conv.weight.clone().view(conv.out_channels, -1)

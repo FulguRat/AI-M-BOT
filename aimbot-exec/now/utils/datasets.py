@@ -23,8 +23,7 @@ from torch.utils.data import Dataset
 from tqdm import tqdm
 
 from utils.augmentations import Albumentations, augment_hsv, copy_paste, letterbox, mixup, random_perspective
-from utils.general import check_requirements, check_file, check_dataset, xywh2xyxy, xywhn2xyxy, xyxy2xywhn, \
-    xyn2xy, segments2boxes, clean_str
+from utils.general import check_requirements, check_file, check_dataset, xywh2xyxy, xywhn2xyxy, xyxy2xywhn, xyn2xy, segments2boxes, clean_str
 from utils.torch_utils import torch_distributed_zero_first
 
 # Parameters
@@ -74,13 +73,13 @@ def exif_transpose(image):
     orientation = exif.get(0x0112, 1)  # default 1
     if orientation > 1:
         method = {2: Image.FLIP_LEFT_RIGHT,
-                  3: Image.ROTATE_180,
-                  4: Image.FLIP_TOP_BOTTOM,
-                  5: Image.TRANSPOSE,
-                  6: Image.ROTATE_270,
-                  7: Image.TRANSVERSE,
-                  8: Image.ROTATE_90,
-                  }.get(orientation)
+                3: Image.ROTATE_180,
+                4: Image.FLIP_TOP_BOTTOM,
+                5: Image.TRANSPOSE,
+                6: Image.ROTATE_270,
+                7: Image.TRANSVERSE,
+                8: Image.ROTATE_90,
+                }.get(orientation)
         if method is not None:
             image = image.transpose(method)
             del exif[0x0112]
@@ -88,20 +87,19 @@ def exif_transpose(image):
     return image
 
 
-def create_dataloader(path, imgsz, batch_size, stride, single_cls=False, hyp=None, augment=False, cache=False, pad=0.0,
-                      rect=False, rank=-1, workers=8, image_weights=False, quad=False, prefix=''):
+def create_dataloader(path, imgsz, batch_size, stride, single_cls=False, hyp=None, augment=False, cache=False, pad=0.0, rect=False, rank=-1, workers=8, image_weights=False, quad=False, prefix=''):
     # Make sure only the first process in DDP process the dataset first, and the following others can use the cache
     with torch_distributed_zero_first(rank):
         dataset = LoadImagesAndLabels(path, imgsz, batch_size,
-                                      augment=augment,  # augment images
-                                      hyp=hyp,  # augmentation hyperparameters
-                                      rect=rect,  # rectangular training
-                                      cache_images=cache,
-                                      single_cls=single_cls,
-                                      stride=int(stride),
-                                      pad=pad,
-                                      image_weights=image_weights,
-                                      prefix=prefix)
+                                    augment=augment,  # augment images
+                                    hyp=hyp,  # augmentation hyperparameters
+                                    rect=rect,  # rectangular training
+                                    cache_images=cache,
+                                    single_cls=single_cls,
+                                    stride=int(stride),
+                                    pad=pad,
+                                    image_weights=image_weights,
+                                    prefix=prefix)
 
     batch_size = min(batch_size, len(dataset))
     nw = min([os.cpu_count(), batch_size if batch_size > 1 else 0, workers])  # number of workers
@@ -360,8 +358,7 @@ def img2label_paths(img_paths):
 
 
 class LoadImagesAndLabels(Dataset):  # for training/testing
-    def __init__(self, path, img_size=640, batch_size=16, augment=False, hyp=None, rect=False, image_weights=False,
-                 cache_images=False, single_cls=False, stride=32, pad=0.0, prefix=''):
+    def __init__(self, path, img_size=416, batch_size=16, augment=False, hyp=None, rect=False, image_weights=False, cache_images=False, single_cls=False, stride=32, pad=0.0, prefix=''):
         self.img_size = img_size
         self.augment = augment
         self.hyp = hyp
@@ -550,11 +547,11 @@ class LoadImagesAndLabels(Dataset):  # for training/testing
 
             if self.augment:
                 img, labels = random_perspective(img, labels,
-                                                 degrees=hyp['degrees'],
-                                                 translate=hyp['translate'],
-                                                 scale=hyp['scale'],
-                                                 shear=hyp['shear'],
-                                                 perspective=hyp['perspective'])
+                                                degrees=hyp['degrees'],
+                                                translate=hyp['translate'],
+                                                scale=hyp['scale'],
+                                                shear=hyp['shear'],
+                                                perspective=hyp['perspective'])
 
         nl = len(labels)  # number of labels
         if nl:
@@ -695,12 +692,12 @@ def load_mosaic(self, index):
     # Augment
     img4, labels4, segments4 = copy_paste(img4, labels4, segments4, p=self.hyp['copy_paste'])
     img4, labels4 = random_perspective(img4, labels4, segments4,
-                                       degrees=self.hyp['degrees'],
-                                       translate=self.hyp['translate'],
-                                       scale=self.hyp['scale'],
-                                       shear=self.hyp['shear'],
-                                       perspective=self.hyp['perspective'],
-                                       border=self.mosaic_border)  # border to remove
+                                    degrees=self.hyp['degrees'],
+                                    translate=self.hyp['translate'],
+                                    scale=self.hyp['scale'],
+                                    shear=self.hyp['shear'],
+                                    perspective=self.hyp['perspective'],
+                                    border=self.mosaic_border)  # border to remove
 
     return img4, labels4
 
@@ -769,12 +766,12 @@ def load_mosaic9(self, index):
 
     # Augment
     img9, labels9 = random_perspective(img9, labels9, segments9,
-                                       degrees=self.hyp['degrees'],
-                                       translate=self.hyp['translate'],
-                                       scale=self.hyp['scale'],
-                                       shear=self.hyp['shear'],
-                                       perspective=self.hyp['perspective'],
-                                       border=self.mosaic_border)  # border to remove
+                                    degrees=self.hyp['degrees'],
+                                    translate=self.hyp['translate'],
+                                    scale=self.hyp['scale'],
+                                    shear=self.hyp['shear'],
+                                    perspective=self.hyp['perspective'],
+                                    border=self.mosaic_border)  # border to remove
 
     return img9, labels9
 
@@ -951,7 +948,7 @@ def dataset_stats(path='coco128.yaml', autodownload=False, verbose=False, profil
                         'image_stats': {'total': dataset.n, 'unlabelled': int(np.all(x == 0, 1).sum()),
                                         'per_class': (x > 0).sum(0).tolist()},
                         'labels': [{str(Path(k).name): round_labels(v.tolist())} for k, v in
-                                   zip(dataset.img_files, dataset.labels)]}
+                                zip(dataset.img_files, dataset.labels)]}
 
         if hub:
             im_dir = hub_dir / 'images'

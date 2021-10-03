@@ -5,7 +5,6 @@ import torch
 import torch.nn as nn
 
 from models.common import Conv, DWConv
-from utils.downloads import attempt_download
 
 
 class CrossConv(nn.Module):
@@ -62,10 +61,10 @@ class GhostBottleneck(nn.Module):
         super().__init__()
         c_ = c2 // 2
         self.conv = nn.Sequential(GhostConv(c1, c_, 1, 1),  # pw
-                                  DWConv(c_, c_, k, s, act=False) if s == 2 else nn.Identity(),  # dw
-                                  GhostConv(c_, c2, 1, 1, act=False))  # pw-linear
+                                DWConv(c_, c_, k, s, act=False) if s == 2 else nn.Identity(),  # dw
+                                GhostConv(c_, c2, 1, 1, act=False))  # pw-linear
         self.shortcut = nn.Sequential(DWConv(c1, c1, k, s, act=False),
-                                      Conv(c1, c2, 1, 1, act=False)) if s == 2 else nn.Identity()
+                                Conv(c1, c2, 1, 1, act=False)) if s == 2 else nn.Identity()
 
     def forward(self, x):
         return self.conv(x) + self.shortcut(x)
@@ -111,26 +110,13 @@ class Ensemble(nn.ModuleList):
 
 
 def attempt_load(weights, map_location=None, inplace=True):
-    from models.yolo import Detect, Model
-
     # Loads an ensemble of models weights=[a,b,c] or a single model weights=[a] or weights=a
     model = Ensemble()
-    for w in weights if isinstance(weights, list) else [weights]:
-        ckpt = torch.load(attempt_download(w), map_location=map_location)  # load
-        model.append(ckpt['ema' if ckpt.get('ema') else 'model'].float().fuse().eval())  # FP32 model
+    ckpt = torch.load(weights, map_location=map_location)
+    model.append(ckpt['model'].float().fuse().eval())  # FP32 model
 
     # Compatibility updates
     for m in model.modules():
-        if type(m) in [nn.Hardswish, nn.LeakyReLU, nn.ReLU, nn.ReLU6, nn.SiLU, Detect, Model]:
-            m.inplace = inplace  # pytorch 1.7.0 compatibility
-        elif type(m) is Conv:
-            m._non_persistent_buffers_set = set()  # pytorch 1.6.0 compatibility
+        m.inplace = inplace  # pytorch 1.7.0 compatibility
 
-    if len(model) == 1:
-        return model[-1]  # return model
-    else:
-        print(f'Ensemble created with {weights}\n')
-        for k in ['names']:
-            setattr(model, k, getattr(model[-1], k))
-        model.stride = model[torch.argmax(torch.tensor([m.stride.max() for m in model])).int()].stride  # max stride
-        return model  # return ensemble
+    return model[-1]  # return model
