@@ -234,7 +234,7 @@ def model_info(model, verbose=False, img_size=640):
         for i, (name, p) in enumerate(model.named_parameters()):
             name = name.replace('module_list.', '')
             print('%5g %40s %9s %12g %20s %10.3g %10.3g' %
-                  (i, name, p.requires_grad, p.numel(), list(p.shape), p.mean(), p.std()))
+                (i, name, p.requires_grad, p.numel(), list(p.shape), p.mean(), p.std()))
 
     try:  # FLOPs
         from thop import profile
