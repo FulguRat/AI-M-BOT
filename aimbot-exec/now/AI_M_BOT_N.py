@@ -27,7 +27,7 @@ if __name__ == '__main__':
     freeze_support()  # 为了顺利编译成exe
 
     # 选择标准/烧卡模式
-    if MsgBox('欢迎使用与交流', f'作者: jiapai12138 (killmatt01)\n学习交流欢迎加群: 212068326\n\n==================\n请使游戏窗口化运行\n请问您的电脑是高配机吗?', 4):
+    if MsgBox('欢迎使用与交流', f'作者: jiapai12138 (killmatt01)\n学习交流欢迎加群: 212068326\n\n==================\n请使游戏窗口化运行\n请问您要运行坑爹版吗?', 4):
         from AI_main_pow import main
     else:
         from AI_main import main

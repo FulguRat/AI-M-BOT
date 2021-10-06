@@ -1,5 +1,6 @@
 from util import is_full_screen
 from win32con import SRCCOPY
+from statistics import mean
 import numpy as np
 import pywintypes
 import win32gui
@@ -9,25 +10,25 @@ import mss
 
 class WindowCapture:  # 截图类
     # 类属性
-    win_hwnd, hwnd, outerhwnd = None, None, None  # 窗口句柄
+    hwnd, outerhwnd = None, None  # 窗口句柄
     windows_class = None  # 窗口类名
     ratio_h2H, ratio_w2h = 1, 1  # 截图比例(高对于窗口高,宽对于高)
     total_w, total_h = 0, 0  # 窗口内宽高
     cut_w, cut_h = 0, 0  # 截取宽高
     actual_x, actual_y = 0, 0  # 截图左上角屏幕位置x,y
-    left_corner = [0, 0]  # 窗口左上角屏幕位置
     errors = 0  # 仅仅显示一次错误
     sct = mss.mss()  # mss截图初始化
     wDC, dcObj, cDC = None, None, None
-    fullscreen = 0
+    screen_rect = win32gui.GetClientRect(win32gui.GetDesktopWindow())
+    my_window_rect = (0, 0, 1600, 900)  # 记忆过去的敞口数据
+    my_client_rect = (0, 0, 1600, 900)  # 记忆过去的敞口数据
+    my_left_corner = (0, 0)  # 记忆过去的敞口数据
 
     # 构造函数
     def __init__(self, window_class, window_hwnd, h2H = 4/9, w2h = 1.6):
         self.windows_class = window_class
         self.ratio_h2H, self.ratio_w2h = h2H, w2h
-        self.win_hwnd = window_hwnd
-        self.fullscreen = 1 if is_full_screen(window_hwnd) else 0
-        self.hwnd = win32gui.GetDesktopWindow() if self.fullscreen else window_hwnd
+        self.hwnd = win32gui.GetDesktopWindow() if is_full_screen(window_hwnd) else window_hwnd
         try:
             self.outerhwnd = win32gui.FindWindow(window_class, None)
         except pywintypes.error as e:
@@ -42,27 +43,31 @@ class WindowCapture:  # 截图类
     def update_window_info(self):
         try:
             # 获取窗口数据
-            window_rect = win32gui.GetWindowRect(self.win_hwnd)
-            client_rect = win32gui.GetClientRect(self.win_hwnd)
-            self.left_corner = win32gui.ClientToScreen(self.win_hwnd, (0, 0))
+            window_rect = win32gui.GetWindowRect(self.hwnd)
+            client_rect = win32gui.GetClientRect(self.hwnd)
+            left_corner = win32gui.ClientToScreen(self.hwnd, (0, 0))
+
+            # 获取非最小化的窗口数据
+            self.my_window_rect = window_rect if min(window_rect[2], window_rect[3]) > 0 else self.my_window_rect
+            self.my_client_rect = client_rect if min(client_rect[2], client_rect[3]) > 0 else self.my_client_rect
+            self.my_left_corner = left_corner if min(left_corner[0], left_corner[1]) > 0 else self.my_left_corner
 
             # 确认截图相关数据
-            self.total_w = client_rect[2] - client_rect[0]
-            self.total_h = client_rect[3] - client_rect[1]
+            self.total_w = self.my_client_rect[2]
+            self.total_h = self.my_client_rect[3]
             self.cut_h = int(self.total_h * self.ratio_h2H)
             self.cut_w = int(self.cut_h * self.ratio_w2h)
 
-            screen_rect = win32gui.GetClientRect(self.hwnd)
-            if (self.cut_w > min(self.total_w, screen_rect[2] - screen_rect[0])) or (self.cut_h > min(self.total_h, screen_rect[3] - screen_rect[1])):
+            if (self.cut_w > min(self.total_w, self.screen_rect[2] - self.screen_rect[0])) or (self.cut_h > min(self.total_h, self.screen_rect[3] - self.screen_rect[1])):
                 raise Exception(f'这宽高不行: {self.cut_w} {self.cut_h}')
 
-            self.offset_x = (self.total_w - self.cut_w) // 2 + (self.left_corner[0] - window_rect[0]) * (1 - self.fullscreen)
-            self.offset_y = (self.total_h - self.cut_h) // 2 + (self.left_corner[1] - window_rect[1]) * (1 - self.fullscreen)
-            self.actual_x = window_rect[0] + self.offset_x
-            self.actual_y = window_rect[1] + self.offset_y
+            self.offset_x = (self.total_w - self.cut_w) // 2 + (self.my_left_corner[0] - self.my_window_rect[0])
+            self.offset_y = (self.total_h - self.cut_h) // 2 + (self.my_left_corner[1] - self.my_window_rect[1])
+            self.actual_x = self.my_window_rect[0] + self.offset_x
+            self.actual_y = self.my_window_rect[1] + self.offset_y
         except pywintypes.error as e:
             if self.errors < 2:
-                print('获取窗口数据错误\n' + str(e))
+                print('获取窗口数据错误 请不要将窗口最小化\n' + str(e))
                 self.errors += 1
             pass
 
@@ -100,7 +105,7 @@ class WindowCapture:  # 截图类
         try:
             return win32gui.GetWindowRect(self.outerhwnd)[0]
         except pywintypes.error:
-            return 300
+            return int(self.screen_rect[2] / 5)
 
     def get_side_len(self):  # 基础边长
         return int(self.total_h * (2/3))

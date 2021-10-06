@@ -58,11 +58,11 @@ def check_status(arr):
         change_withlock(arr, 9, 0, lock)
     if GetAsyncKeyState(0x26) < 0:  # 上方向键↑
         move_factor = arr[21]
-        move_factor += 0.001
+        move_factor += 0.002
         change_withlock(arr, 21, move_factor, lock)
     if GetAsyncKeyState(0x28) < 0:  # 下方向键↓
         move_factor = arr[21]
-        move_factor -= 0.001
+        move_factor -= 0.002
         if move_factor < 0.01:
             move_factor = 0.01
         change_withlock(arr, 21, move_factor, lock)
@@ -83,9 +83,9 @@ def check_status(arr):
 # 多线程展示效果
 def show_frames(array):
     set_dpi()
-    cv2.namedWindow('Show frame', cv2.WINDOW_KEEPRATIO)
+    cv2.namedWindow('Show frame', cv2.WINDOW_AUTOSIZE)
     cv2.moveWindow('Show frame', 0, 0)
-    cv2.destroyAllWindows()
+    # cv2.destroyAllWindows()
     font = cv2.FONT_HERSHEY_SIMPLEX  # 效果展示字体
 
     while True:  # 等待共享内存加载完毕
@@ -124,9 +124,9 @@ def show_frames(array):
             cv2.waitKey(25)
             check_status(array)
         except AttributeError:
-            cv2.destroyAllWindows()
+            pass
         except cv2.error:
-            cv2.destroyAllWindows()
+            pass
 
     cv2.destroyAllWindows()
     existing_show_shm.close()
@@ -227,24 +227,27 @@ def main():
     arr[18] = 0  # 连续射击次数
     arr[19] = 1600  # 窗口宽
     arr[20] = 1.0  # 锁定范围
-    arr[21] = 0.0  # 鼠标移动系数
+    arr[21] = 1.0  # 鼠标移动系数
 
-    # 确认大致平均后坐影响
     recoil_more = 1
-    recoil_control = {
-        'CrossFire': 2,  # 32
-        'Valve001': 2,  # 2.5
-        'LaunchCombatUWindowsClient': 2,  # 10.0
-        'LaunchUnrealUWindowsClient': 5,  # 20
-    }.get(window_class_name, 2)
+    recoil_control = 2.0
 
-    # 测试过的几个游戏的移动系数,鼠标灵敏度设置看备注(800dpi)
-    arr[21] = {
-        'CrossFire': 1.333,  # 32
-        'Valve001': 1.667,  # 2.5
-        'LaunchCombatUWindowsClient': 1.319,  # 10.0
-        'LaunchUnrealUWindowsClient': 0.500,  # 20
-    }.get(window_class_name, 1)
+    config = ConfigParser()
+    if len(config.read('config.ini')) > 0:
+        if 'recoil control' in config:
+            if window_class_name in config['recoil control']:
+                recoil_control = float(config['recoil control'][window_class_name])
+        else:
+            config.add_section('recoil control')
+
+        if 'move factor' in config:
+            if window_class_name in config['move factor']:
+                arr[21] = float(config['move factor'][window_class_name])
+        else:
+            config.add_section('move factor')
+    else:
+        config.add_section('recoil control')
+        config.add_section('move factor')
 
     mouse_detect_proc.start()  # 开始鼠标监测进程
 
@@ -275,7 +278,7 @@ def main():
         from torch_yolox import FrameDetectionX
         Analysis = FrameDetectionX(window_hwnd_name)
         string_model = '您正使用yolox-tiny模型'
-    elif Conan == 0:
+    elif Conan == 3:
         from torch_yolo5 import FrameDetection5
         Analysis = FrameDetection5(window_hwnd_name)
         string_model = '您正使用yolov5-s模型'
@@ -407,6 +410,11 @@ def main():
             process_times.popleft()
         if len(move_recordx) > sqrt(show_fps[0]):
             move_recordx.popleft()
+
+    config['move factor'][window_class_name] = str(round(arr[21], 3))
+    config['recoil control'][window_class_name] = str(round(recoil_control, 3))
+    with open('config.ini', 'w') as cf:
+        config.write(cf)
 
     print('关闭进程中......')
     change_withlock(arr, 14, 1, lock)

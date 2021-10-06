@@ -54,13 +54,18 @@ def set_dpi():
 # 检测是否全屏
 def is_full_screen(hWnd):
     try:
-        scrnsetting = EnumDisplaySettings(None, -1)
-        full_screen_rect = (0, 0, scrnsetting.PelsWidth, scrnsetting.PelsHeight)
         client_rect = win32gui.GetClientRect(hWnd)
-        return client_rect >= full_screen_rect
+        return client_rect >= get_full_screen()
     except pywintypes.error as e:
         print('全屏检测错误\n' + str(e))
         return False
+
+
+# 检测全屏大小
+def get_full_screen():
+    scrnsetting = EnumDisplaySettings(None, -1)
+    full_screen_rect = (0, 0, scrnsetting.PelsWidth, scrnsetting.PelsHeight)
+    return full_screen_rect
 
 
 # 检查是否为管理员权限
@@ -98,8 +103,13 @@ def get_window_info():
             if MsgBox('这是你需要的游戏窗口名称吗?(请开启游戏窗口化)', title_name, style=4):
                 outer_hwnd = hwnd_var = win32gui.FindWindow(class_name, None)
                 inner_hwnd = win32gui.FindWindowEx(hwnd_var, None, None, None)
-                if inner_hwnd and win32gui.GetClientRect(inner_hwnd) != (0, 0, 0, 0):
-                    hwnd_var = inner_hwnd
+                outer_rect = win32gui.GetWindowRect(outer_hwnd)
+                outer_w = outer_rect[2] - outer_rect[0]
+                outer_h = outer_rect[3] - outer_rect[1]
+                if inner_hwnd:
+                    inner_rect = win32gui.GetClientRect(inner_hwnd)
+                    if abs(outer_w - inner_rect[2]) < 100 and abs(outer_h - inner_rect[3]) < 100:
+                        hwnd_var = inner_hwnd
                 if class_name in test_window:
                     testing_purpose = True
 
