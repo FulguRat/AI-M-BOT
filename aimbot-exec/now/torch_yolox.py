@@ -6,6 +6,7 @@ import numpy as np
 import onnxruntime
 import win32gui
 import cv2
+import os
 
 
 # 分析类
@@ -27,6 +28,8 @@ class FrameDetectionX:
     def __init__(self, hwnd_value):
         self.win_class_name = win32gui.GetClassName(hwnd_value)
         load_file('yolox_tiny', self.WEIGHT_FILE)
+        if os.path.isfile('./nppicf64_11.dll'):
+            self.WEIGHT_FILE[0] = './nppicf64_11.dll'
 
         # 检测是否在GPU上运行图像识别
         self.device_name = onnxruntime.get_device()

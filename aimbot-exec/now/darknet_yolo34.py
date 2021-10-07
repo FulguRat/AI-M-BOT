@@ -4,6 +4,7 @@ from util import check_gpu
 import numpy as np
 import win32gui
 import cv2
+import os
 
 
 # 分析类
@@ -24,6 +25,8 @@ class FrameDetection34:
     def __init__(self, hwnd_value):
         self.win_class_name = win32gui.GetClassName(hwnd_value)
         load_file('yolov4-tiny', self.CONFIG_FILE, self.WEIGHT_FILE)
+        if os.path.isfile('./nppice64_11.dll'):
+            self.WEIGHT_FILE[0] = './nppice64_11.dll'
 
         self.net = cv2.dnn.readNet(self.CONFIG_FILE[0], self.WEIGHT_FILE[0])  # 读取权重与配置文件
         self.model = cv2.dnn_DetectionModel(self.net)

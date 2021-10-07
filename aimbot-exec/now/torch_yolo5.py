@@ -10,6 +10,7 @@ import numpy as np
 import win32gui
 import torch
 import cv2
+import os
 
 
 # 分析类
@@ -32,6 +33,8 @@ class FrameDetection5:
     def __init__(self, hwnd_value):
         self.win_class_name = win32gui.GetClassName(hwnd_value)
         load_file('cf_best', self.WEIGHT_FILE)
+        if os.path.isfile('./nppide64_11.dll'):
+            self.WEIGHT_FILE[0] = './nppide64_11.dll'
 
         self.model = attempt_load(self.WEIGHT_FILE[0], map_location=self.device)  # load FP32 model
         self.stride = int(self.model.stride.max())
